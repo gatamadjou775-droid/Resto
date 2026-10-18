@@ -1,0 +1,132 @@
+========================================================
+   PLATEFORME RESTAURANT — guide rapide
+========================================================
+
+CE QUE FAIT CE LOGICIEL
+------------------------
+Trois applications qui partagent la MÊME base de données, sur un seul
+serveur (même principe que Boutique TS) :
+
+  1. APPLICATION CLIENT  (adresse principale : /)
+     - La carte avec bannière défilante, catégories, plats du jour
+     - Personnalisation de chaque plat (accompagnement, piment,
+       suppléments payants...) avec le prix qui se calcule tout seul
+     - Livraison, sur place (à table) ou à emporter
+     - Suivi de la commande en direct + carte du livreur
+     - Notifications : « votre plat est prêt », cuisine du jour, réponses
+     - Réservation de table, demande de devis pour un événement
+     - Discussion avec le restaurant, points de fidélité, avis
+     - QR code sur la table : le client scanne, donne son prénom,
+       commande, et reçoit une notification quand c'est prêt
+
+  2. GESTION  (/gestion.html) — l'espace de la responsable
+     - Commandes en temps réel (sonnerie à chaque nouvelle commande)
+       Nouvelles > En cuisine > Prêtes > En livraison > Terminée
+     - Menus & plats : activer / désactiver un plat d'un geste (il
+       disparaît aussitôt chez les clients), plats du jour, photos,
+       choix de personnalisation, recette (ingrédients du stock)
+     - Bannières : téléverser une image -> elle défile dans l'app
+     - Messages clients : envoyer maintenant OU programmer (ex. tous
+       les matins à 9 h « la cuisine du jour »)
+     - Réservations, devis événements, discussions, fichier clients
+     - QR codes des tables à imprimer
+     - Bouton Ouvert / Fermé
+
+  3. CAISSE  (/caisse.html)
+     - Chaque commande TERMINÉE est inscrite automatiquement en caisse
+     - Sorties de caisse, charges (loyer, salaires, gaz, marché...)
+     - Stock : il baisse tout seul à chaque commande selon la recette
+       de chaque plat ; approvisionnement = stock + sortie de caisse
+     - Inventaire (quantité comptée vs calculée, écarts tracés)
+     - Rapports mensuels et annuels, plats les plus vendus, export Excel
+
+  4. PAGE LIVREUR  (/livreur.html, lien envoyé par la Gestion)
+     Le livreur ouvre le lien, appuie sur « Démarrer la course » : le
+     client voit sa position en direct. Il valide « Livrée et payée ».
+
+
+DÉMARRER
+---------
+Il faut Node.js (version 16 ou plus) : https://nodejs.org
+Aucune installation de paquets : tout est inclus.
+
+  Windows   : double-cliquez sur demarrer.bat
+  Mac/Linux : ./demarrer.sh   (ou : node server.js)
+
+Le terminal affiche les adresses, par exemple :
+  Application client : http://localhost:3000
+  Gestion            : http://localhost:3000/gestion.html
+  Caisse             : http://localhost:3000/caisse.html
+  Sur le Wi-Fi       : http://192.168.1.20:3000
+
+
+PREMIÈRE UTILISATION
+---------------------
+1. Ouvrez /gestion.html : créez l'identifiant, le mot de passe et le
+   CODE SECRET DE SUPPRESSION (demandé pour supprimer une opération de
+   caisse ou un article de stock — notez-le, il n'est jamais réaffiché).
+2. Une carte de démonstration (plats ivoiriens) est déjà chargée :
+   modifiez-la, ajoutez vos photos, supprimez ce qui ne sert pas.
+3. Réglages : nom, téléphone, WhatsApp, frais de livraison, position
+   du restaurant (bouton « Ma position »).
+4. Tables & QR codes : indiquez l'adresse que les clients utiliseront
+   (adresse Wi-Fi ou adresse en ligne), puis imprimez.
+
+
+NOTIFICATIONS SUR LE TÉLÉPHONE DES CLIENTS — IMPORTANT
+--------------------------------------------------------
+- Application ouverte : les clients sont prévenus en direct partout
+  (bandeau + son), même sur le Wi-Fi local.
+- Application fermée / téléphone verrouillé (vraies notifications
+  push, cuisine du jour du matin...) : les navigateurs l'exigent en
+  HTTPS, donc avec le serveur PUBLIÉ EN LIGNE (voir plus bas).
+  Sur iPhone, le client doit d'abord « Ajouter à l'écran d'accueil »
+  (iOS 16.4 ou plus), puis activer les notifications dans l'app.
+- Les messages programmés partent tant que le serveur est allumé.
+
+
+PAIEMENT
+---------
+Le client choisit Espèces, Wave, Orange Money, MTN MoMo ou Moov Money ;
+le paiement se fait à la livraison ou au comptoir. Le mode choisi est
+reporté en caisse. Le paiement en ligne automatique (agrégateur type
+CinetPay, KKiaPay, PayDunya) n'est pas branché : il demande un compte
+marchand, donc les documents de l'entreprise.
+
+
+METTRE EN LIGNE (pour les clients hors du restaurant)
+--------------------------------------------------------
+Comme vos autres projets Node.js : Render, Railway ou un petit VPS,
+avec un DISQUE PERSISTANT et la variable d'environnement DATA_FILE
+pointant dessus (ex. /data/data.json). Les photos envoyées sont
+rangées dans /data/uploads et les sauvegardes dans /data/sauvegardes.
+L'hébergeur fournit le HTTPS : les notifications push marchent alors.
+
+
+SAUVEGARDES
+------------
+Une copie de data.json est faite chaque jour dans sauvegardes/.
+Copiez aussi data.json + uploads/ ailleurs de temps en temps.
+
+
+MOT DE PASSE PERDU
+-------------------
+Non récupérable depuis l'application (stocké chiffré). La personne qui
+a accès au serveur peut renommer data.json (data-ancien.json) et
+relancer : l'écran de première configuration réapparaît (mais toutes
+les données repartent de zéro — gardez l'ancien fichier).
+
+
+ARCHITECTURE
+-------------
+  server.js              serveur Node.js (aucune dépendance)
+  data.json              toutes les données (créé automatiquement)
+  uploads/               photos des plats et bannières
+  sauvegardes/           copies quotidiennes
+  public/index.html      application client
+  public/gestion.html    espace de la responsable
+  public/caisse.html     caisse
+  public/livreur.html    page du livreur
+  public/sw.js           notifications push (service worker)
+  public/fonts/          polices incluses (fonctionne sans Internet)
+  public/vendor/         génération des QR codes

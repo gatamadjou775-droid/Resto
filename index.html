@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0B3D2C">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg">
+<link rel="apple-touch-icon" href="/icon.svg">
+<title>Commander en ligne</title>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<style>
+:root{
+  --vert:#0B3D2C;--vert2:#0F5138;--vert3:#16684A;--vertp:#E3EFE8;
+  --rouge:#E10600;--rouge2:#B80500;--rougep:#FDE7E6;
+  --jaune:#FFB703;--jaunep:#FFF4D6;
+  --creme:#FFFDF8;--gris:#F3F1EE;--gris2:#E6E2DC;--gris3:#A39E96;--gris4:#6E6961;
+  --noir:#16130F;
+  --r:24px;--sh:0 10px 30px rgba(22,19,15,.10);
+  --fh:'Barlow Condensed','Arial Narrow',sans-serif;--fb:'Barlow',-apple-system,'Segoe UI',Roboto,sans-serif;
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{background:var(--vert);}
+body{font-family:var(--fb);color:var(--noir);background:var(--vert);min-height:100vh;font-size:15px;overflow-x:hidden;}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit;}
+button{cursor:pointer;border:none;background:none;}
+img{display:block;max-width:100%;}
+.wrap{max-width:560px;margin:0 auto;position:relative;}
+.h{font-family:var(--fh);font-weight:800;text-transform:uppercase;letter-spacing:.2px;line-height:.95;}
+
+/* ---------- En-tête (fond vert bouteille) ---------- */
+.top{padding:calc(14px + env(safe-area-inset-top,0px)) 18px 22px;display:flex;align-items:center;gap:12px;color:#fff;}
+.logo{width:54px;height:54px;border-radius:50%;background:var(--rouge);flex-shrink:0;position:relative;box-shadow:0 6px 18px rgba(225,6,0,.45);}
+.logo::before{content:'';position:absolute;inset:11px;border-radius:50%;border:5px solid var(--jaune);}
+.logo::after{content:'';position:absolute;inset:22px;border-radius:50%;background:var(--jaune);}
+.top-txt{flex:1;min-width:0;}
+.top-nom{font-size:30px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.top-adr{font-size:14px;font-weight:600;opacity:.85;margin-top:3px;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.top-adr .dot{width:16px;height:16px;border-radius:50%;background:#fff;color:var(--vert);font-size:11px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0;}
+.bell{width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.12);position:relative;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.bell svg{width:22px;height:22px;stroke:#fff;}
+.bell .b{position:absolute;top:6px;right:6px;min-width:18px;height:18px;border-radius:9px;background:var(--rouge);color:#fff;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 4px;border:2px solid var(--vert);}
+.bell .b.on{display:flex;}
+
+/* ---------- Feuille blanche ---------- */
+.sheet{background:var(--creme);border-radius:30px 30px 0 0;min-height:calc(100vh - 90px);padding:18px 0 calc(110px + var(--safe-b));}
+.pad{padding:0 18px;}
+.tabs{display:flex;gap:clamp(14px,5vw,26px);padding:6px 22px 0;align-items:flex-end;}
+.tab{font-family:var(--fh);font-weight:800;font-size:clamp(27px,9vw,38px);white-space:nowrap;text-transform:uppercase;color:#C9C4BC;padding-bottom:8px;position:relative;line-height:1;}
+.tab.on{color:var(--noir);}
+.tab.on::after{content:'';position:absolute;left:0;right:0;bottom:0;height:4px;border-radius:3px;background:var(--rouge);}
+.table-chip{margin:14px 18px 0;background:var(--vert);color:#fff;border-radius:18px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:14px;}
+.table-chip b{font-family:var(--fh);font-size:24px;font-weight:800;}
+.search{margin:18px 18px 0;background:var(--gris);border-radius:999px;display:flex;align-items:center;gap:10px;padding:0 20px;height:58px;}
+.search svg{width:22px;height:22px;stroke:var(--noir);flex-shrink:0;}
+.search input{border:none;background:none;outline:none;font-size:18px;font-weight:500;flex:1;min-width:0;}
+.search input::placeholder{color:var(--noir);opacity:.85;}
+.closed{margin:14px 18px 0;background:var(--rougep);color:var(--rouge2);border-radius:16px;padding:12px 16px;font-weight:600;font-size:14px;}
+
+/* ---------- Bannière défilante ---------- */
+.ban-wrap{margin-top:22px;position:relative;}
+.ban-track{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:0 26px;scrollbar-width:none;}
+.ban-track::-webkit-scrollbar{display:none;}
+.ban{flex:0 0 calc(100% - 20px);height:172px;border-radius:22px;scroll-snap-align:center;position:relative;overflow:hidden;color:#fff;background:var(--vert2);display:flex;align-items:flex-end;cursor:pointer;}
+.ban.rouge{background:var(--rouge);}
+.ban.jaune{background:var(--jaune);color:var(--noir);}
+.ban img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.ban.has-img::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(11,61,44,.92) 0%,rgba(11,61,44,.55) 48%,rgba(0,0,0,0) 78%);}
+.ban .deco1{position:absolute;right:-40px;top:-50px;width:190px;height:190px;border-radius:50%;background:rgba(255,255,255,.10);}
+.ban .deco2{position:absolute;right:-24px;bottom:-74px;width:150px;height:150px;border-radius:50%;border:22px solid var(--rouge);opacity:.95;}
+.ban.rouge .deco2{border-color:var(--jaune);}
+.ban.jaune .deco2{border-color:var(--rouge);}
+.ban.jaune .deco1{background:rgba(255,255,255,.35);}
+.ban .bt{position:relative;z-index:2;padding:18px 18px 18px;max-width:72%;}
+.ban .bt .h{font-size:27px;margin-bottom:6px;}
+.ban .bt p{font-size:13.5px;line-height:1.3;font-weight:500;opacity:.95;}
+.dots{display:flex;justify-content:center;gap:6px;margin-top:10px;}
+.dots i{width:7px;height:7px;border-radius:4px;background:var(--gris2);transition:all .25s;}
+.dots i.on{width:22px;background:var(--rouge);}
+
+/* ---------- Catégories (tuiles) ---------- */
+.cats{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px;padding:26px 18px 0;}
+.cat{text-align:center;cursor:pointer;}
+.cat .tile{background:var(--gris);border-radius:26px;height:96px;position:relative;margin-top:22px;overflow:visible;}
+.cat.big{grid-row:span 2;}
+.cat.big .tile{height:222px;}
+.cat .tile .disc{position:absolute;left:50%;top:-22px;transform:translateX(-50%);width:96px;height:96px;border-radius:50%;box-shadow:0 10px 22px rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;}
+.cat.big .tile .disc{width:150px;height:150px;top:20px;}
+.cat .tile .disc::before{content:'';position:absolute;inset:12px;border-radius:50%;border:4px solid rgba(255,255,255,.55);}
+.cat .tile .disc span{font-family:var(--fh);font-weight:800;color:#fff;font-size:30px;position:relative;}
+.cat.big .tile .disc span{font-size:46px;}
+.cat .tile img{position:absolute;left:8%;right:8%;bottom:6px;height:118%;width:84%;object-fit:contain;filter:drop-shadow(0 10px 14px rgba(0,0,0,.2));}
+.cat .tile img.cover{left:0;right:0;bottom:0;top:0;width:100%;height:100%;object-fit:cover;border-radius:26px;filter:none;}
+.cat .nm{font-weight:700;font-size:16px;margin-top:8px;}
+
+/* ---------- Sections ---------- */
+.sec-t{font-size:34px;padding:34px 18px 14px;}
+.tempt{display:flex;gap:14px;overflow-x:auto;padding:0 18px 4px;scrollbar-width:none;}
+.tempt::-webkit-scrollbar{display:none;}
+.tp{flex:0 0 88px;text-align:center;cursor:pointer;}
+.tp .rd{width:88px;height:88px;border-radius:50%;overflow:hidden;background:var(--gris);position:relative;}
+.tp .rd img{width:100%;height:100%;object-fit:cover;}
+.tp .nm{font-size:13px;font-weight:600;margin-top:6px;line-height:1.15;}
+.tp .tag{position:absolute;bottom:4px;right:4px;width:24px;height:16px;border-radius:3px;background:var(--rouge);}
+
+.chips{display:flex;gap:8px;overflow-x:auto;padding:4px 18px 14px;scrollbar-width:none;position:sticky;top:0;background:var(--creme);z-index:5;}
+.chips::-webkit-scrollbar{display:none;}
+.chip{flex-shrink:0;padding:10px 16px;border-radius:999px;background:var(--gris);font-weight:700;font-size:14px;white-space:nowrap;}
+.chip.on{background:var(--noir);color:#fff;}
+.grp-t{font-size:24px;padding:18px 18px 10px;}
+
+/* ---------- Cartes plats ---------- */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px 14px;padding:0 18px;}
+.card{cursor:pointer;min-width:0;}
+.card .ph{position:relative;border-radius:24px;overflow:hidden;aspect-ratio:1.55;background:var(--gris);}
+.card .ph img{width:100%;height:100%;object-fit:cover;}
+.heart{position:absolute;top:10px;right:10px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;}
+.heart svg{width:28px;height:28px;stroke:#fff;stroke-width:2.2;fill:none;filter:drop-shadow(0 1px 3px rgba(0,0,0,.35));}
+.heart.on svg{fill:var(--rouge);stroke:var(--rouge);}
+.add{position:absolute;right:10px;bottom:10px;width:36px;height:36px;border-radius:50%;background:var(--rouge);color:#fff;font-size:24px;font-weight:600;line-height:36px;text-align:center;box-shadow:0 4px 12px rgba(225,6,0,.4);}
+.card .row{display:flex;justify-content:space-between;align-items:baseline;gap:6px;margin-top:9px;}
+.card .nm{font-weight:700;font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+.card .rt{font-weight:600;font-size:15px;white-space:nowrap;flex-shrink:0;}
+.pill{display:inline-flex;align-items:center;gap:6px;margin-top:6px;background:var(--gris);color:var(--gris4);border-radius:8px;padding:4px 10px;font-weight:600;font-size:14px;}
+.pill.prix{background:var(--jaunep);color:var(--noir);}
+.pill.jour{background:var(--rougep);color:var(--rouge2);}
+
+/* Visuel par défaut quand le plat n'a pas encore de photo */
+.noimg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.noimg .plate{width:62%;aspect-ratio:1;border-radius:50%;background:rgba(255,255,255,.18);position:relative;display:flex;align-items:center;justify-content:center;}
+.noimg .plate::before{content:'';position:absolute;inset:14%;border-radius:50%;border:4px solid rgba(255,255,255,.45);}
+.noimg .plate span{font-family:var(--fh);font-weight:800;color:#fff;font-size:28px;position:relative;text-transform:uppercase;}
+.noimg .ring{position:absolute;right:-18%;top:-30%;width:60%;aspect-ratio:1;border-radius:50%;border:14px solid rgba(255,255,255,.14);}
+
+/* ---------- Barre panier flottante ---------- */
+.cartbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + var(--safe-b));width:calc(100% - 28px);max-width:532px;background:var(--rouge);color:#fff;border-radius:20px;padding:14px 18px;display:none;justify-content:space-between;align-items:center;box-shadow:0 12px 28px rgba(225,6,0,.4);z-index:40;font-weight:700;}
+.cartbar.on{display:flex;}
+.cartbar .h{font-size:22px;}
+
+/* ---------- Navigation basse ---------- */
+.nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--gris2);z-index:50;padding-bottom:var(--safe-b);}
+.nav .in{max-width:560px;margin:0 auto;display:flex;}
+.nav button{flex:1;padding:10px 0 9px;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--gris3);font-size:12.5px;font-weight:600;position:relative;}
+.nav button svg{width:25px;height:25px;stroke:currentColor;fill:none;stroke-width:2;}
+.nav button.on{color:var(--noir);}
+.nav .nb{position:absolute;top:5px;left:calc(50% + 6px);min-width:18px;height:18px;border-radius:9px;background:var(--rouge);color:#fff;font-size:11px;display:none;align-items:center;justify-content:center;padding:0 4px;}
+.nav .nb.on{display:flex;}
+
+/* ---------- Pages ---------- */
+.page-t{font-size:40px;padding:8px 18px 16px;}
+.box{background:#fff;border-radius:22px;padding:16px;margin:0 18px 14px;box-shadow:0 2px 0 var(--gris2);}
+.box-t{font-family:var(--fh);font-weight:800;font-size:20px;text-transform:uppercase;margin-bottom:12px;}
+.empty{text-align:center;padding:40px 30px;color:var(--gris4);}
+.empty .h{font-size:28px;color:var(--noir);margin-bottom:8px;}
+.empty .shape{width:110px;height:110px;border-radius:50%;background:var(--gris);margin:0 auto 18px;position:relative;}
+.empty .shape::before{content:'';position:absolute;inset:18px;border-radius:50%;border:6px solid var(--gris2);}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:15px 22px;border-radius:999px;font-weight:700;font-size:16px;background:var(--rouge);color:#fff;}
+.btn.full{width:100%;}
+.btn.vert{background:var(--vert);}
+.btn.ghost{background:var(--gris);color:var(--noir);}
+.btn.sm{padding:9px 14px;font-size:14px;}
+.btn:disabled{opacity:.5;}
+.btn .h{font-size:22px;}
+.line{display:flex;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--gris);}
+.line:first-of-type{border-top:none;}
+.line .th{width:58px;height:58px;border-radius:16px;overflow:hidden;flex-shrink:0;background:var(--gris);}
+.line .th img{width:100%;height:100%;object-fit:cover;}
+.line .inf{flex:1;min-width:0;}
+.line .inf b{display:block;font-size:15.5px;}
+.line .inf small{display:block;color:var(--gris4);font-size:13px;line-height:1.3;margin-top:2px;}
+.line .px{font-weight:700;white-space:nowrap;}
+.step{display:flex;align-items:center;background:var(--gris);border-radius:999px;}
+.step button{width:34px;height:34px;font-size:20px;font-weight:700;}
+.step span{min-width:22px;text-align:center;font-weight:700;}
+.seg{display:flex;background:var(--gris);border-radius:16px;padding:4px;gap:4px;}
+.seg button{flex:1;padding:11px 6px;border-radius:12px;font-weight:700;font-size:14px;color:var(--gris4);}
+.seg button.on{background:#fff;color:var(--noir);box-shadow:0 2px 8px rgba(0,0,0,.08);}
+.fld{margin-top:12px;}
+.fld label{display:block;font-size:12.5px;font-weight:700;color:var(--gris4);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;}
+.fld input,.fld textarea,.fld select{width:100%;padding:14px 15px;border-radius:14px;border:2px solid var(--gris);background:var(--gris);outline:none;font-size:16px;}
+.fld input:focus,.fld textarea:focus,.fld select:focus{border-color:var(--noir);background:#fff;}
+.fld textarea{resize:vertical;min-height:70px;}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.pays{display:flex;flex-wrap:wrap;gap:8px;}
+.pay{padding:10px 14px;border-radius:12px;background:var(--gris);font-weight:700;font-size:14px;border:2px solid transparent;}
+.pay.on{border-color:var(--noir);background:#fff;}
+.tot{display:flex;justify-content:space-between;padding:5px 0;font-size:15px;}
+.tot.big{font-family:var(--fh);font-weight:800;font-size:28px;text-transform:uppercase;padding-top:10px;}
+.gps{display:flex;align-items:center;gap:10px;margin-top:10px;}
+.gps .ok{color:var(--vert3);font-weight:700;font-size:14px;}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.sw{width:50px;height:30px;border-radius:15px;background:var(--gris2);position:relative;flex-shrink:0;transition:background .2s;}
+.sw::after{content:'';position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.2);}
+.sw.on{background:var(--vert3);}
+.sw.on::after{left:23px;}
+.note{font-size:13px;color:var(--gris4);line-height:1.4;margin-top:8px;}
+
+/* Suivi de commande */
+.track{background:var(--vert);color:#fff;border-radius:26px;padding:18px;margin:0 18px 14px;position:relative;overflow:hidden;}
+.track::before{content:'';position:absolute;right:-50px;top:-60px;width:180px;height:180px;border-radius:50%;border:24px solid var(--rouge);opacity:.9;}
+.track .num{font-size:14px;font-weight:600;opacity:.8;position:relative;}
+.track .st{font-size:40px;margin:4px 0 4px;position:relative;max-width:75%;}
+.track .sub{font-size:14px;opacity:.85;position:relative;}
+.prog{display:flex;gap:5px;margin:18px 0 6px;position:relative;}
+.prog i{flex:1;height:7px;border-radius:4px;background:rgba(255,255,255,.2);}
+.prog i.on{background:var(--jaune);}
+.prog i.cur{background:var(--jaune);animation:pulse 1.2s ease-in-out infinite;}
+@keyframes pulse{50%{opacity:.4;}}
+.prog-l{display:flex;justify-content:space-between;font-size:11px;font-weight:600;opacity:.75;position:relative;}
+.map{height:230px;border-radius:18px;overflow:hidden;margin-top:14px;background:var(--vert2);position:relative;z-index:1;}
+.hist{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.badge{display:inline-block;padding:4px 10px;border-radius:8px;font-size:12.5px;font-weight:700;background:var(--gris);color:var(--gris4);}
+.badge.vert{background:var(--vertp);color:var(--vert3);}
+.badge.rouge{background:var(--rougep);color:var(--rouge2);}
+.badge.jaune{background:var(--jaunep);color:#8a5a00;}
+.stars{display:flex;gap:6px;margin:8px 0;}
+.stars button{width:38px;height:38px;border-radius:50%;background:var(--gris);font-family:var(--fh);font-weight:800;font-size:18px;}
+.stars button.on{background:var(--jaune);}
+
+/* Services */
+.svc{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:0 18px;}
+.sv{background:var(--gris);border-radius:24px;padding:16px;min-height:150px;position:relative;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;justify-content:flex-end;}
+.sv .h{font-size:23px;position:relative;margin-top:30px;}
+.sv p{font-size:13px;color:var(--gris4);margin-top:4px;position:relative;line-height:1.3;}
+.sv .s1{position:absolute;top:-26px;right:-26px;width:74px;height:74px;border-radius:50%;}
+.sv .s2{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;border:6px solid rgba(255,255,255,.7);}
+.sv.dark{background:var(--vert);color:#fff;}
+.sv.dark p{color:rgba(255,255,255,.75);}
+.sv.red{background:var(--rouge);color:#fff;}
+.sv.red p{color:rgba(255,255,255,.85);}
+.premium{display:inline-block;background:var(--jaune);color:var(--noir);font-size:11px;font-weight:800;padding:3px 8px;border-radius:6px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;position:relative;align-self:flex-start;}
+
+/* Fidélité */
+.fid{background:var(--rouge);color:#fff;border-radius:26px;padding:20px;margin:0 18px 14px;position:relative;overflow:hidden;}
+.fid::before{content:'';position:absolute;right:-30px;bottom:-70px;width:200px;height:200px;border-radius:50%;border:28px solid var(--jaune);}
+.fid .h{font-size:58px;position:relative;}
+.fid p{position:relative;font-size:14px;opacity:.95;max-width:70%;}
+
+/* Discussion */
+.chat{display:flex;flex-direction:column;gap:8px;padding:0 18px;}
+.msg{max-width:80%;padding:10px 14px;border-radius:18px;font-size:15px;line-height:1.35;word-wrap:break-word;}
+.msg.me{align-self:flex-end;background:var(--vert);color:#fff;border-bottom-right-radius:6px;}
+.msg.them{align-self:flex-start;background:#fff;border-bottom-left-radius:6px;box-shadow:0 1px 0 var(--gris2);}
+.msg time{display:block;font-size:11px;opacity:.6;margin-top:3px;}
+.chat-in{position:fixed;left:0;right:0;bottom:calc(64px + var(--safe-b));z-index:45;background:var(--creme);padding:10px 14px;border-top:1px solid var(--gris2);}
+.chat-in .in{max-width:532px;margin:0 auto;display:flex;gap:8px;}
+.chat-in .btn{flex-shrink:0;}
+.chat-in input{flex:1;min-width:0;padding:14px 18px;border-radius:999px;border:none;background:var(--gris);outline:none;font-size:16px;}
+
+/* ---------- Feuille modale ---------- */
+.modal{position:fixed;inset:0;z-index:100;display:none;}
+.modal.on{display:block;}
+.modal .bg{position:absolute;inset:0;background:rgba(10,20,15,.55);animation:fade .2s;}
+.modal .pn{position:absolute;left:0;right:0;bottom:0;max-width:560px;margin:0 auto;background:var(--creme);border-radius:28px 28px 0 0;max-height:92vh;overflow-y:auto;animation:up .25s ease;padding-bottom:calc(16px + var(--safe-b));}
+@keyframes up{from{transform:translateY(40px);opacity:.4;}}
+@keyframes fade{from{opacity:0;}}
+.pn .x{position:absolute;top:14px;right:14px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.92);z-index:3;font-size:22px;font-weight:600;color:var(--noir);box-shadow:0 2px 8px rgba(0,0,0,.15);}
+.pn .hero{aspect-ratio:1.7;background:var(--gris);border-radius:28px 28px 0 0;overflow:hidden;}
+.pn .hero img{width:100%;height:100%;object-fit:cover;}
+.pn .bd{padding:18px;}
+.pn .ttl{font-size:36px;}
+.pn .desc{color:var(--gris4);margin-top:6px;line-height:1.4;}
+.og{margin-top:20px;}
+.og-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.og-h b{font-family:var(--fh);font-size:21px;font-weight:800;text-transform:uppercase;}
+.og-h span{font-size:12px;font-weight:700;padding:3px 8px;border-radius:6px;background:var(--gris);color:var(--gris4);}
+.og-h span.req{background:var(--rougep);color:var(--rouge2);}
+.opt{display:flex;align-items:center;gap:12px;padding:13px 2px;border-bottom:1px solid var(--gris);cursor:pointer;}
+.opt .mk{width:24px;height:24px;border-radius:50%;border:2.5px solid var(--gris2);flex-shrink:0;position:relative;}
+.opt .mk.sq{border-radius:7px;}
+.opt.on .mk{border-color:var(--rouge);background:var(--rouge);}
+.opt.on .mk::after{content:'';position:absolute;inset:5px;border-radius:50%;background:#fff;}
+.opt.on .mk.sq::after{border-radius:2px;}
+.opt .on-l{flex:1;font-weight:600;}
+.opt .op{color:var(--gris4);font-weight:600;font-size:14px;}
+.pbar{position:sticky;bottom:0;background:var(--creme);padding:12px 18px 4px;display:flex;gap:12px;align-items:center;border-top:1px solid var(--gris);}
+.pbar .step button{width:44px;height:44px;}
+.pbar .btn{flex:1;}
+
+/* Toast */
+.toast{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:50%;transform:translate(-50%,-150%);width:calc(100% - 24px);max-width:520px;background:var(--noir);color:#fff;border-radius:20px;padding:14px 16px;z-index:200;transition:transform .35s cubic-bezier(.2,.9,.3,1.2);box-shadow:0 14px 34px rgba(0,0,0,.35);display:flex;gap:12px;align-items:center;cursor:pointer;}
+.toast.on{transform:translate(-50%,0);}
+.toast .tdot{width:12px;height:12px;border-radius:50%;background:var(--jaune);flex-shrink:0;}
+.toast b{display:block;font-size:15px;}
+.toast span{display:block;font-size:13.5px;opacity:.85;margin-top:2px;}
+.toast.err .tdot{background:var(--rouge);}
+
+.notif{display:flex;gap:12px;padding:14px 0;border-top:1px solid var(--gris);}
+.notif:first-child{border-top:none;}
+.notif .nd{width:12px;height:12px;border-radius:50%;background:var(--gris2);margin-top:5px;flex-shrink:0;}
+.notif.nv .nd{background:var(--rouge);}
+.notif b{display:block;}
+.notif p{color:var(--gris4);font-size:14px;line-height:1.35;margin-top:2px;}
+.notif time{font-size:12px;color:var(--gris3);}
+.err-t{color:var(--rouge2);font-weight:600;font-size:14px;margin-top:10px;min-height:18px;}
+.ask{background:var(--jaunep);border-radius:20px;padding:16px;margin:0 18px 14px;}
+.ask b{display:block;font-family:var(--fh);font-size:20px;text-transform:uppercase;font-weight:800;}
+.ask p{font-size:14px;margin:4px 0 12px;color:#5a4a20;}
+.loading{padding:60px 0;text-align:center;color:rgba(255,255,255,.7);}
+@media (min-width:600px){.sheet{border-radius:30px;margin-bottom:20px;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo" aria-hidden="true"></div>
+    <div class="top-txt">
+      <div class="top-nom h" id="r-nom">&nbsp;</div>
+      <div class="top-adr" id="r-adr"></div>
+    </div>
+    <button class="bell" onclick="go('notifs')" aria-label="Notifications">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+      <span class="b" id="bell-b"></span>
+    </button>
+  </header>
+  <main class="sheet" id="vue"><div class="loading">Chargement du menu…</div></main>
+</div>
+
+<div class="cartbar" id="cartbar" onclick="go('panier')"><span id="cb-n"></span><span class="h" id="cb-t"></span></div>
+
+<nav class="nav"><div class="in">
+  <button data-v="accueil" onclick="go('accueil')"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/></svg>Accueil</button>
+  <button data-v="panier" onclick="go('panier')"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18l-2 11H5z"/><path d="M8 9l4-6 4 6"/></svg>Panier<span class="nb" id="nb-panier"></span></button>
+  <button data-v="commandes" onclick="go('commandes')"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="3"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>Commandes<span class="nb" id="nb-cmd"></span></button>
+  <button data-v="services" onclick="go('services')"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="3"/><rect x="13" y="3" width="8" height="8" rx="3"/><rect x="3" y="13" width="8" height="8" rx="3"/><rect x="13" y="13" width="8" height="8" rx="3"/></svg>Services<span class="nb" id="nb-svc"></span></button>
+  <button data-v="profil" onclick="go('profil')"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>Profil</button>
+</div></nav>
+
+<div class="modal" id="modal"><div class="bg" onclick="closeSheet()"></div><div class="pn" id="pn"></div></div>
+<div class="toast" id="toast"><div class="tdot"></div><div><b id="t-t"></b><span id="t-b"></span></div></div>
+
+<script>
+// =====================================================================
+// ÉTAT
+// =====================================================================
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } }
+};
+const S = {
+  menu: null, token: LS.get('resto_token', ''), client: null,
+  cart: LS.get('resto_panier', []), favs: LS.get('resto_favs', []),
+  mode: 'livraison', table: 0, vue: 'accueil', cat: null, search: '',
+  commandes: [], notifs: [], reservations: [], devis: [], chat: [],
+  pay: 'especes', usePoints: false, position: null, maps: {}
+};
+const STEPS_LIV = [['recue', 'Reçue'], ['acceptee', 'Acceptée'], ['preparation', 'En cuisine'], ['prete', 'Prête'], ['en_livraison', 'En route'], ['terminee', 'Livrée']];
+const STEPS_SP = [['recue', 'Reçue'], ['acceptee', 'Acceptée'], ['preparation', 'En cuisine'], ['prete', 'Prête'], ['terminee', 'Servie']];
+const ST_LABEL = { recue: 'Reçue', acceptee: 'Acceptée', preparation: 'En cuisine', prete: 'Prête !', en_livraison: 'En route', terminee: 'Terminée', annulee: 'Annulée' };
+const PAYS = [['especes', 'Espèces'], ['wave', 'Wave'], ['orange_money', 'Orange Money'], ['mtn_momo', 'MTN MoMo'], ['moov_money', 'Moov Money']];
+
+// =====================================================================
+// OUTILS
+// =====================================================================
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const F = n => Math.round(n || 0).toLocaleString('fr-FR').replace(/ | /g, ' ') + ' F';
+const initials = s => String(s || '').split(/\s+/).filter(w => w.length > 2 || /^[A-Z]/.test(w)).slice(0, 2).map(w => w[0]).join('').toUpperCase() || String(s || '?')[0].toUpperCase();
+const fdate = iso => { const d = new Date(iso); return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }) + ' · ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }); };
+const fheure = iso => new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+const catOf = p => (S.menu.categories.find(c => c.id === p.categorieId) || {});
+function visual(p, cls) {
+  if (p.image) return `<img src="${esc(p.image)}" alt="${esc(p.nom)}" loading="lazy" ${cls ? `class="${cls}"` : ''}>`;
+  const col = catOf(p).couleur || '#E10600';
+  return `<div class="noimg" style="background:${esc(col)}"><div class="ring"></div><div class="plate"></div></div>`;
+}
+async function api(path, opts) {
+  opts = opts || {};
+  const h = { 'Content-Type': 'application/json' };
+  if (S.token) h['X-Client-Token'] = S.token;
+  let res, body;
+  try { res = await fetch(path, { method: opts.method || (opts.body ? 'POST' : 'GET'), headers: h, body: opts.body ? JSON.stringify(opts.body) : undefined }); body = await res.json(); }
+  catch (e) { throw new Error('Connexion impossible. Vérifiez votre connexion internet.'); }
+  if (res.status === 401 && S.token && !opts.noLogout) { S.token = ''; S.client = null; LS.set('resto_token', ''); }
+  if (!res.ok || body.ok === false) throw new Error(body.error || 'Erreur');
+  return body;
+}
+let toastTimer;
+function toast(t, b, err, onClick) {
+  $('t-t').textContent = t; $('t-b').textContent = b || '';
+  const el = $('toast'); el.classList.toggle('err', !!err); el.classList.add('on');
+  el.onclick = () => { el.classList.remove('on'); if (onClick) onClick(); };
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('on'), err ? 4000 : 5500);
+}
+function ding() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [0, .16].forEach((t, i) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.value = i ? 1046 : 784; g.gain.setValueAtTime(.18, ctx.currentTime + t); g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + t + .35); o.connect(g); g.connect(ctx.destination); o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + .4); });
+    if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
+  } catch (e) { }
+}
+
+// =====================================================================
+// NAVIGATION
+// =====================================================================
+function go(v, opts) {
+  S.vue = v;
+  document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('on', b.dataset.v === v || (v === 'chat' && b.dataset.v === 'services') || (v === 'notifs' && b.dataset.v === 'profil')));
+  render();
+  if (!(opts && opts.keepScroll)) window.scrollTo(0, 0);
+  if (v === 'notifs' && S.client) setTimeout(() => api('/api/client/notifs/lu', { body: {} }).then(() => { S.notifs.forEach(n => n.lu = true); badges(); }).catch(() => { }), 1200);
+}
+function render() {
+  if (!S.menu) return;
+  const v = S.vue;
+  const html = v === 'panier' ? vPanier() : v === 'commandes' ? vCommandes() : v === 'services' ? vServices() : v === 'profil' ? vProfil() : v === 'chat' ? vChat() : v === 'notifs' ? vNotifs() : vAccueil();
+  $('vue').innerHTML = html;
+  if (v === 'accueil') afterAccueil();
+  if (v === 'commandes') afterCommandes();
+  if (v === 'chat') { const c = $('chat-end'); if (c) c.scrollIntoView(); }
+  badges();
+}
+function badges() {
+  const n = S.cart.reduce((s, i) => s + i.qte, 0);
+  const t = S.cart.reduce((s, i) => s + i.prixUnit * i.qte, 0);
+  $('nb-panier').textContent = n; $('nb-panier').classList.toggle('on', n > 0);
+  const act = S.commandes.filter(c => !['terminee', 'annulee'].includes(c.statut)).length;
+  $('nb-cmd').textContent = act; $('nb-cmd').classList.toggle('on', act > 0);
+  const unreadChat = S.chat.filter(m => m.de === 'resto' && !m.vu).length;
+  $('nb-svc').textContent = unreadChat; $('nb-svc').classList.toggle('on', unreadChat > 0 && S.vue !== 'chat');
+  const un = S.notifs.filter(x => !x.lu).length;
+  $('bell-b').textContent = un; $('bell-b').classList.toggle('on', un > 0);
+  $('cartbar').classList.toggle('on', n > 0 && S.vue === 'accueil');
+  $('cb-n').textContent = 'Voir le panier · ' + n + ' article' + (n > 1 ? 's' : '');
+  $('cb-t').textContent = F(t);
+}
+
+// =====================================================================
+// ACCUEIL
+// =====================================================================
+function vAccueil() {
+  const m = S.menu, r = m.resto;
+  const q = S.search.trim().toLowerCase();
+  const sp = S.mode !== 'livraison';
+  let h = `<div class="tabs">
+    <button class="tab ${!sp ? 'on' : ''}" onclick="setMode('livraison')">Livraison</button>
+    <button class="tab ${sp ? 'on' : ''}" onclick="setMode('${S.table ? 'sur_place' : 'emporter'}')">Sur place</button></div>`;
+  if (S.table) h += `<div class="table-chip"><span>Vous êtes à la table</span><b>N° ${S.table}</b></div>`;
+  if (!r.ouvert) h += `<div class="closed">Actuellement fermé — vous pouvez consulter la carte. ${esc(r.horaires)}</div>`;
+  h += `<label class="search"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+    <input id="q" placeholder="Rechercher" value="${esc(S.search)}" oninput="S.search=this.value;renderList()" autocomplete="off"></label>`;
+  if (!q) {
+    if (m.banners.length) {
+      h += `<div class="ban-wrap"><div class="ban-track" id="ban">` + m.banners.map(b => `
+        <div class="ban ${esc(b.couleur)} ${b.image ? 'has-img' : ''}" onclick="banClick('${esc(b.lien)}')">
+          ${b.image ? `<img src="${esc(b.image)}" alt="">` : '<div class="deco1"></div><div class="deco2"></div>'}
+          <div class="bt">${b.titre ? `<div class="h">${esc(b.titre)}</div>` : ''}${b.texte ? `<p>${esc(b.texte)}</p>` : ''}</div>
+        </div>`).join('') + `</div>${m.banners.length > 1 ? `<div class="dots" id="dots">${m.banners.map((_, i) => `<i class="${i ? '' : 'on'}"></i>`).join('')}</div>` : ''}</div>`;
+    }
+    const cats = m.categories.filter(c => m.plats.some(p => p.categorieId === c.id));
+    if (cats.length) {
+      h += `<div class="cats">` + cats.slice(0, 5).map((c, i) => `
+        <div class="cat ${i === 0 ? 'big' : ''}" onclick="pickCat(${c.id})">
+          <div class="tile">${c.image ? `<img src="${esc(c.image)}" class="cover" alt="">` : `<div class="disc" style="background:${esc(c.couleur)}"></div>`}</div>
+          <div class="nm">${esc(c.nom)}</div></div>`).join('') + `</div>`;
+    }
+    const tent = m.plats.filter(p => p.platDuJour).concat(m.plats.filter(p => !p.platDuJour && m.ratings[p.id]).sort((a, b) => m.ratings[b.id].moyenne - m.ratings[a.id].moyenne)).slice(0, 10);
+    const tlist = tent.length >= 3 ? tent : tent.concat(m.plats.filter(p => !tent.includes(p))).slice(0, 8);
+    if (tlist.length) {
+      h += `<div class="sec-t h">Laissez-vous tenter</div><div class="tempt">` + tlist.map(p => `
+        <div class="tp" onclick="openPlat(${p.id})"><div class="rd">${visual(p)}${p.platDuJour ? '<span class="tag" title="Plat du jour"></span>' : ''}</div><div class="nm">${esc(p.nom)}</div></div>`).join('') + `</div>`;
+    }
+  }
+  h += `<div class="sec-t h" id="carte">${q ? 'Résultats' : 'La carte'}</div>`;
+  if (!q) h += `<div class="chips" id="chips"><button class="chip ${!S.cat ? 'on' : ''}" onclick="pickCat(null,true)">Tout</button>` +
+    m.categories.filter(c => m.plats.some(p => p.categorieId === c.id)).map(c => `<button class="chip ${S.cat === c.id ? 'on' : ''}" onclick="pickCat(${c.id},true)">${esc(c.nom)}</button>`).join('') + `</div>`;
+  h += `<div id="liste">${listHtml()}</div>`;
+  return h;
+}
+function listHtml() {
+  const m = S.menu, q = S.search.trim().toLowerCase();
+  const norm = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  let plats = m.plats;
+  if (q) plats = plats.filter(p => norm(p.nom + ' ' + (p.description || '') + ' ' + (catOf(p).nom || '')).includes(norm(q)));
+  if (!plats.length) return `<div class="empty"><div class="shape"></div><div class="h">Rien trouvé</div>Essayez un autre mot.</div>`;
+  const cats = m.categories.filter(c => (!S.cat || q) || c.id === S.cat);
+  return cats.map(c => {
+    const ps = plats.filter(p => p.categorieId === c.id);
+    if (!ps.length) return '';
+    return `<div class="grp-t h">${esc(c.nom)}</div><div class="grid">` + ps.map(card).join('') + `</div>`;
+  }).join('');
+}
+function card(p) {
+  const rt = S.menu.ratings[p.id];
+  const fav = S.favs.includes(p.id);
+  const closed = !S.menu.resto.ouvert;
+  return `<div class="card" onclick="openPlat(${p.id})">
+    <div class="ph">${visual(p)}
+      <button class="heart ${fav ? 'on' : ''}" onclick="event.stopPropagation();toggleFav(${p.id},this)" aria-label="Favori"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.5-9-9a4.8 4.8 0 0 1 9-3 4.8 4.8 0 0 1 9 3c-2 4.5-9 9-9 9z"/></svg></button>
+      ${closed ? '' : `<span class="add">+</span>`}
+    </div>
+    <div class="row"><div class="nm">${esc(p.nom)}</div><div class="rt">★ ${rt ? String(rt.moyenne).replace('.', ',') : 'Nouveau'}</div></div>
+    ${closed ? `<span class="pill">Actuellement fermé</span>` : `<span class="pill prix">${F(p.prix)}</span>`}
+    ${p.platDuJour ? ` <span class="pill jour">Du jour</span>` : ''}
+  </div>`;
+}
+function renderList() { const l = $('liste'); if (l) l.innerHTML = listHtml(); else render(); }
+function pickCat(id, fromChip) {
+  S.cat = id; S.search = '';
+  render();
+  const el = $('carte'); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 10, behavior: fromChip ? 'auto' : 'smooth' });
+}
+function setMode(m) { S.mode = m; render(); }
+function toggleFav(id, el) {
+  S.favs = S.favs.includes(id) ? S.favs.filter(x => x !== id) : S.favs.concat(id);
+  LS.set('resto_favs', S.favs); el.classList.toggle('on');
+}
+function banClick(l) {
+  if (l === 'menu') pickCat(null);
+  else if (l === 'devis') openDevis();
+  else if (l === 'reserver') openResa();
+  else if (l === 'chat') openChat();
+}
+let banTimer;
+function afterAccueil() {
+  const tr = $('ban'); clearInterval(banTimer);
+  if (!tr || tr.children.length < 2) return;
+  const dots = $('dots') ? [...$('dots').children] : [];
+  let idx = 0, userAt = 0;
+  const cur = () => Math.round(tr.scrollLeft / (tr.children[0].offsetWidth + 12));
+  tr.addEventListener('scroll', () => { const i = cur(); dots.forEach((d, k) => d.classList.toggle('on', k === i)); idx = i; }, { passive: true });
+  tr.addEventListener('touchstart', () => { userAt = Date.now(); }, { passive: true });
+  banTimer = setInterval(() => {
+    if (Date.now() - userAt < 6000 || !document.body.contains(tr)) return;
+    idx = (idx + 1) % tr.children.length;
+    tr.scrollTo({ left: tr.children[idx].offsetLeft - 26, behavior: 'smooth' });
+  }, 4500);
+}
+
+// =====================================================================
+// FICHE PLAT (personnalisation)
+// =====================================================================
+function openSheet(html) { $('pn').innerHTML = html; $('modal').classList.add('on'); $('pn').scrollTop = 0; document.body.style.overflow = 'hidden'; }
+function closeSheet() { $('modal').classList.remove('on'); document.body.style.overflow = ''; }
+let PS = null; // état de la fiche plat ouverte
+function openPlat(id) {
+  const p = S.menu.plats.find(x => x.id === id); if (!p) return;
+  PS = { p, sel: {}, qte: 1, note: '' };
+  (p.options || []).forEach(g => { PS.sel[g.id] = g.type === 'single' && g.requis ? [g.choix[0].id] : []; });
+  drawPlat();
+}
+function platUnit() { let u = PS.p.prix; (PS.p.options || []).forEach(g => (PS.sel[g.id] || []).forEach(cid => { const c = g.choix.find(x => x.id === cid); if (c) u += c.prix; })); return u; }
+function drawPlat() {
+  const p = PS.p, closed = !S.menu.resto.ouvert;
+  openSheet(`<button class="x" onclick="closeSheet()" aria-label="Fermer">×</button>
+    <div class="hero">${visual(p)}</div>
+    <div class="bd"><div class="ttl h">${esc(p.nom)}</div>
+      <div class="desc">${esc(p.description || '')}</div>
+      <div style="margin-top:10px"><span class="pill prix">${F(p.prix)}</span>${p.platDuJour ? ' <span class="pill jour">Plat du jour</span>' : ''}</div>
+      ${(p.options || []).map(g => `<div class="og"><div class="og-h"><b>${esc(g.nom)}</b><span class="${g.requis ? 'req' : ''}">${g.requis ? 'Obligatoire' : (g.type === 'multi' ? 'Plusieurs choix' : 'Facultatif')}</span></div>
+        ${g.choix.map(c => `<div class="opt ${(PS.sel[g.id] || []).includes(c.id) ? 'on' : ''}" onclick="pickOpt('${g.id}','${c.id}')"><span class="mk ${g.type === 'multi' ? 'sq' : ''}"></span><span class="on-l">${esc(c.nom)}</span><span class="op">${c.prix ? '+ ' + F(c.prix) : ''}</span></div>`).join('')}</div>`).join('')}
+      <div class="fld" style="margin-top:20px"><label>Une précision pour la cuisine ?</label><textarea id="pnote" placeholder="Ex. : sans oignons, bien cuit…" oninput="PS.note=this.value">${esc(PS.note)}</textarea></div>
+    </div>
+    <div class="pbar"><div class="step"><button onclick="PS.qte=Math.max(1,PS.qte-1);drawPlatBar()">−</button><span id="pq">${PS.qte}</span><button onclick="PS.qte=Math.min(50,PS.qte+1);drawPlatBar()">+</button></div>
+      <button class="btn" id="padd" onclick="addToCart()" ${closed ? 'disabled' : ''}>${closed ? 'Fermé pour le moment' : `Ajouter · ${F(platUnit() * PS.qte)}`}</button></div>`);
+}
+function drawPlatBar() { $('pq').textContent = PS.qte; if (S.menu.resto.ouvert) $('padd').textContent = `Ajouter · ${F(platUnit() * PS.qte)}`; }
+function pickOpt(gid, cid) {
+  const g = PS.p.options.find(x => x.id === gid); let cur = PS.sel[gid] || [];
+  if (g.type === 'single') cur = cur[0] === cid && !g.requis ? [] : [cid];
+  else cur = cur.includes(cid) ? cur.filter(x => x !== cid) : cur.concat(cid);
+  PS.sel[gid] = cur;
+  const scroll = $('pn').scrollTop; drawPlat(); $('pn').scrollTop = scroll;
+}
+function addToCart() {
+  const p = PS.p;
+  for (const g of p.options || []) if (g.requis && !(PS.sel[g.id] || []).length) return toast('Choix obligatoire', `Choisissez « ${g.nom} ».`, true);
+  const txt = (p.options || []).flatMap(g => (PS.sel[g.id] || []).map(cid => g.choix.find(c => c.id === cid)).filter(Boolean).map(c => c.nom)).join(', ');
+  const key = p.id + '|' + JSON.stringify(PS.sel) + '|' + PS.note.trim();
+  const ex = S.cart.find(i => i.key === key);
+  if (ex) ex.qte += PS.qte;
+  else S.cart.push({ key, platId: p.id, nom: p.nom, prixUnit: platUnit(), qte: PS.qte, options: PS.sel, optionsTxt: txt, note: PS.note.trim() });
+  saveCart(); closeSheet(); badges();
+  toast('Ajouté au panier', `${PS.qte} × ${p.nom}`, false, () => go('panier'));
+}
+function saveCart() { LS.set('resto_panier', S.cart); }
+
+// =====================================================================
+// PANIER & COMMANDE
+// =====================================================================
+function cartTotals() {
+  const r = S.menu.resto;
+  const st = S.cart.reduce((s, i) => s + i.prixUnit * i.qte, 0);
+  const frais = S.mode === 'livraison' ? r.fraisLivraison : 0;
+  let pts = 0, remise = 0;
+  if (S.usePoints && S.client && S.client.points >= r.seuilPoints) { pts = Math.min(S.client.points, Math.floor(Math.floor(st / 2) / r.valeurPoint)); remise = pts * r.valeurPoint; }
+  return { st, frais, pts, remise, total: st + frais - remise };
+}
+function vPanier() {
+  if (!S.cart.length) return `<div class="page-t h">Panier</div><div class="empty"><div class="shape"></div><div class="h">Votre panier est vide</div>Ajoutez vos plats préférés depuis la carte.<br><br><button class="btn" onclick="go('accueil')">Voir la carte</button></div>`;
+  const r = S.menu.resto, t = cartTotals(), c = S.client;
+  const plat = id => S.menu.plats.find(p => p.id === id);
+  return `<div class="page-t h">Panier</div>
+  <div class="box">${S.cart.map((i, k) => { const p = plat(i.platId); return `<div class="line">
+      <div class="th">${p ? visual(p) : ''}</div>
+      <div class="inf"><b>${esc(i.nom)}</b>${i.optionsTxt ? `<small>${esc(i.optionsTxt)}</small>` : ''}${i.note ? `<small>« ${esc(i.note)} »</small>` : ''}<small><b style="display:inline;color:var(--noir)">${F(i.prixUnit * i.qte)}</b></small></div>
+      <div class="step"><button onclick="qty(${k},-1)">−</button><span>${i.qte}</span><button onclick="qty(${k},1)">+</button></div></div>`; }).join('')}
+    <button class="btn ghost sm" style="margin-top:8px" onclick="go('accueil')">+ Ajouter autre chose</button></div>
+
+  <div class="box"><div class="box-t">Comment voulez-vous manger ?</div>
+    <div class="seg"><button class="${S.mode === 'livraison' ? 'on' : ''}" onclick="setMode('livraison')">Livraison</button><button class="${S.mode === 'sur_place' ? 'on' : ''}" onclick="setMode('sur_place')">À table</button><button class="${S.mode === 'emporter' ? 'on' : ''}" onclick="setMode('emporter')">À emporter</button></div>
+    ${S.mode === 'livraison' ? `
+      <div class="fld"><label>Adresse de livraison</label><textarea id="c-adr" placeholder="Quartier, rue, repère (ex. : Riviera 2, en face de la pharmacie)">${esc((c && c.adresse) || LS.get('resto_adr', ''))}</textarea></div>
+      <div class="gps"><button class="btn ghost sm" onclick="getGPS()">Partager ma position</button><span class="ok" id="gps-ok">${S.position ? 'Position GPS ajoutée' : ''}</span></div>
+      <div class="fld"><label>Téléphone</label><input id="c-tel" type="tel" inputmode="tel" value="${esc((c && c.tel) || LS.get('resto_tel', ''))}" placeholder="07 00 00 00 00"></div>
+      <p class="note">Livraison ${F(r.fraisLivraison)} · ${esc(r.delai)}</p>` : ''}
+    ${S.mode === 'sur_place' ? `<div class="fld"><label>Numéro de table</label><input id="c-table" type="number" inputmode="numeric" min="1" value="${S.table || ''}" ${S.table ? 'readonly' : ''} placeholder="Ex. : 4"></div><p class="note">On vous prévient dès que votre plat est prêt.</p>` : ''}
+    ${S.mode === 'emporter' ? `<p class="note" style="margin-top:12px">Vous récupérez votre commande au comptoir. On vous prévient quand elle est prête.</p>` : ''}
+  </div>
+
+  <div class="box"><div class="box-t">Paiement</div>
+    <div class="pays">${PAYS.map(([k, l]) => `<button class="pay ${S.pay === k ? 'on' : ''}" onclick="S.pay='${k}';render()">${l}</button>`).join('')}</div>
+    <p class="note">${S.pay === 'especes' ? 'Vous payez en espèces ' + (S.mode === 'livraison' ? 'au livreur.' : 'au moment du service.') : 'Le paiement mobile se fait ' + (S.mode === 'livraison' ? 'à la livraison' : 'au comptoir') + ', au numéro du restaurant.'}</p>
+    ${c && !c.invite && c.points >= r.seuilPoints ? `<div class="toggle" style="margin-top:14px"><div><b>Utiliser mes ${c.points} points</b><div class="note" style="margin:0">Jusqu’à 50 % du panier</div></div><button class="sw ${S.usePoints ? 'on' : ''}" onclick="S.usePoints=!S.usePoints;render()"></button></div>` : ''}
+    <div class="fld"><label>Note pour la commande (facultatif)</label><input id="c-note" placeholder="Ex. : sonner au portail bleu"></div>
+  </div>
+
+  <div class="box">
+    <div class="tot"><span>Sous-total</span><b>${F(t.st)}</b></div>
+    ${t.frais ? `<div class="tot"><span>Livraison</span><b>${F(t.frais)}</b></div>` : ''}
+    ${t.remise ? `<div class="tot" style="color:var(--vert3)"><span>Points fidélité (${t.pts})</span><b>− ${F(t.remise)}</b></div>` : ''}
+    <div class="tot big"><span>Total</span><span>${F(t.total)}</span></div>
+    <div class="err-t" id="c-err"></div>
+    <button class="btn full" id="c-go" onclick="commander()" ${r.ouvert ? '' : 'disabled'}><span class="h">${r.ouvert ? 'Commander · ' + F(t.total) : 'Restaurant fermé'}</span></button>
+  </div>`;
+}
+function qty(k, d) { S.cart[k].qte += d; if (S.cart[k].qte <= 0) S.cart.splice(k, 1); saveCart(); render(); }
+function getGPS() {
+  if (!navigator.geolocation) return toast('Position indisponible', 'Votre téléphone ne permet pas la localisation.', true);
+  $('gps-ok').textContent = 'Recherche…';
+  navigator.geolocation.getCurrentPosition(p => { S.position = { lat: p.coords.latitude, lng: p.coords.longitude }; $('gps-ok').textContent = 'Position GPS ajoutée'; },
+    () => { $('gps-ok').textContent = ''; toast('Position refusée', 'Indiquez votre adresse à la place.', true); }, { enableHighAccuracy: true, timeout: 12000 });
+}
+async function commander() {
+  const err = $('c-err'); err.textContent = '';
+  const adr = $('c-adr') ? $('c-adr').value.trim() : '';
+  const tel = $('c-tel') ? $('c-tel').value.trim() : '';
+  const table = $('c-table') ? Number($('c-table').value) : 0;
+  if (S.mode === 'livraison' && !adr && !S.position) return err.textContent = 'Indiquez votre adresse ou partagez votre position.';
+  if (S.mode === 'livraison' && tel.replace(/\D/g, '').length < 8) return err.textContent = 'Indiquez un numéro de téléphone valide.';
+  if (S.mode === 'sur_place' && !table) return err.textContent = 'Indiquez votre numéro de table.';
+  if (adr) LS.set('resto_adr', adr); if (tel) LS.set('resto_tel', tel);
+  if (!S.client) return openAuth(() => { go('panier'); }, S.table ? 'invite' : 'inscription');
+  const btn = $('c-go'); btn.disabled = true;
+  try {
+    const t = cartTotals();
+    const r = await api('/api/commandes', { body: { mode: S.mode, table, adresse: adr, tel, position: S.position, paiement: S.pay, note: $('c-note').value, points: t.pts,
+      items: S.cart.map(i => ({ platId: i.platId, qte: i.qte, options: i.options, note: i.note })) } });
+    S.cart = []; saveCart(); S.usePoints = false;
+    S.client = r.client;
+    S.commandes.unshift(r.commande);
+    go('commandes');
+    ding();
+    toast('Commande envoyée !', `N° ${r.commande.numero} — la cuisine la reçoit en ce moment.`);
+  } catch (e) { err.textContent = e.message; btn.disabled = false; }
+}
+
+// =====================================================================
+// SUIVI DES COMMANDES
+// =====================================================================
+function vCommandes() {
+  if (!S.client) return `<div class="page-t h">Commandes</div><div class="empty"><div class="shape"></div><div class="h">Suivez vos commandes</div>Connectez-vous pour voir vos commandes en temps réel.<br><br><button class="btn" onclick="openAuth(()=>go('commandes'))">Se connecter</button></div>`;
+  const act = S.commandes.filter(c => !['terminee', 'annulee'].includes(c.statut));
+  const old = S.commandes.filter(c => ['terminee', 'annulee'].includes(c.statut));
+  let h = `<div class="page-t h">Commandes</div>`;
+  h += pushAsk();
+  if (!S.commandes.length) h += `<div class="empty"><div class="shape"></div><div class="h">Aucune commande</div>Votre première commande apparaîtra ici avec son suivi en direct.<br><br><button class="btn" onclick="go('accueil')">Commander</button></div>`;
+  act.forEach(c => {
+    const steps = c.mode === 'livraison' ? STEPS_LIV : STEPS_SP;
+    const idx = steps.findIndex(s => s[0] === c.statut);
+    const sub = c.statut === 'recue' ? 'En attente de confirmation par le restaurant'
+      : c.statut === 'prete' ? (c.mode === 'sur_place' ? `On vous l’apporte à la table ${c.table}` : c.mode === 'emporter' ? 'Venez la récupérer au comptoir' : 'Le livreur la récupère')
+      : c.statut === 'en_livraison' ? 'Votre livreur est en chemin' : c.mode === 'livraison' ? 'Livraison estimée : ' + esc(S.menu.resto.delai) : 'Préparée à la minute';
+    h += `<div class="track"><div class="num">Commande n° ${c.numero} · ${fheure(c.at)} · ${c.mode === 'livraison' ? 'Livraison' : c.mode === 'sur_place' ? 'Table ' + c.table : 'À emporter'}</div>
+      <div class="st h">${ST_LABEL[c.statut]}</div><div class="sub">${sub}</div>
+      <div class="prog">${steps.map((s, i) => `<i class="${i < idx ? 'on' : i === idx ? 'cur' : ''}"></i>`).join('')}</div>
+      <div class="prog-l"><span>${steps[0][1]}</span><span>${steps[steps.length - 1][1]}</span></div>
+      ${c.statut === 'en_livraison' ? `<div class="map" id="map-${c.id}"></div>` : ''}
+    </div>
+    <div class="box">${c.lignes.map(l => `<div class="line"><div class="inf"><b>${l.qte} × ${esc(l.nom)}</b>${l.options.length ? `<small>${esc(l.options.map(o => o.choix).join(', '))}</small>` : ''}</div><div class="px">${F(l.total)}</div></div>`).join('')}
+      ${c.frais ? `<div class="tot"><span>Livraison</span><b>${F(c.frais)}</b></div>` : ''}${c.remise ? `<div class="tot"><span>Points fidélité</span><b>− ${F(c.remise)}</b></div>` : ''}
+      <div class="tot big"><span>Total</span><span>${F(c.total)}</span></div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        ${c.statut === 'recue' ? `<button class="btn ghost sm" onclick="annuler(${c.id})">Annuler</button>` : ''}
+        <button class="btn ghost sm" onclick="openChat()">Une question ?</button>
+        ${S.menu.resto.tel ? `<a class="btn ghost sm" href="tel:${esc(S.menu.resto.tel)}" style="text-decoration:none">Appeler</a>` : ''}
+      </div></div>`;
+  });
+  if (old.length) {
+    h += `<div class="grp-t h">Historique</div>`;
+    old.forEach(c => {
+      h += `<div class="box"><div class="hist"><div><b>N° ${c.numero}</b> · <span style="color:var(--gris4)">${fdate(c.at)}</span></div><span class="badge ${c.statut === 'terminee' ? 'vert' : 'rouge'}">${ST_LABEL[c.statut]}</span></div>
+        <div class="note" style="margin-top:6px">${esc(c.lignes.map(l => l.qte + ' × ' + l.nom).join(', '))}</div>
+        <div class="hist" style="margin-top:10px"><b>${F(c.total)}</b><button class="btn sm" onclick="recommander(${c.id})">Recommander</button></div>
+        ${c.statut === 'terminee' && c.pointsGagnes ? `<div class="note">+ ${c.pointsGagnes} points de fidélité</div>` : ''}
+        ${c.statut === 'terminee' ? (c.avis ? `<div class="note">Votre note : ${'★'.repeat(c.avis.note)}${c.avis.commentaire ? ' — « ' + esc(c.avis.commentaire) + ' »' : ''}</div>` : `<div style="margin-top:10px"><b style="font-size:14px">Comment c’était ?</b><div class="stars">${[1, 2, 3, 4, 5].map(n => `<button onclick="noter(${c.id},${n})">${n}</button>`).join('')}</div></div>`) : ''}
+      </div>`;
+    });
+  }
+  return h;
+}
+async function afterCommandes() {
+  const live = S.commandes.filter(c => c.statut === 'en_livraison');
+  if (!live.length) return;
+  try { await loadLeaflet(); } catch (e) { live.forEach(c => { const el = $('map-' + c.id); if (el) el.innerHTML = '<div style="padding:20px;color:#fff;font-size:14px">Carte indisponible hors connexion.</div>'; }); return; }
+  live.forEach(c => {
+    const el = $('map-' + c.id); if (!el) return;
+    const r = S.menu.resto;
+    const center = c.livreurPos || c.position || { lat: r.lat, lng: r.lng };
+    const map = L.map(el, { zoomControl: false, attributionControl: true }).setView([center.lat, center.lng], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
+    const dot = (col, sz) => L.divIcon({ className: '', html: `<div style="width:${sz}px;height:${sz}px;border-radius:50%;background:${col};border:4px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4)"></div>`, iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2] });
+    const pts = [];
+    if (c.position) { L.marker([c.position.lat, c.position.lng], { icon: dot('#0B3D2C', 20) }).addTo(map).bindTooltip('Vous'); pts.push([c.position.lat, c.position.lng]); }
+    const liv = L.marker([center.lat, center.lng], { icon: dot('#E10600', 26) }).addTo(map).bindTooltip(c.livreurPos ? 'Livreur' : 'Restaurant');
+    pts.push([center.lat, center.lng]);
+    if (pts.length > 1) map.fitBounds(pts, { padding: [40, 40] });
+    S.maps[c.id] = { map, liv };
+  });
+}
+function loadLeaflet() {
+  if (window.L) return Promise.resolve();
+  return new Promise((ok, ko) => {
+    const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'; document.head.appendChild(css);
+    const s = document.createElement('script'); s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'; s.onload = ok; s.onerror = ko; document.head.appendChild(s);
+  });
+}
+async function annuler(id) {
+  if (!confirm('Annuler cette commande ?')) return;
+  try { const r = await api(`/api/commandes/${id}/annuler`, { body: {} }); upsert(S.commandes, r.commande, true); render(); } catch (e) { toast('Impossible', e.message, true); }
+}
+async function noter(id, n) {
+  const com = prompt('Un mot pour la cuisine ? (facultatif)') || '';
+  try { const r = await api(`/api/commandes/${id}/avis`, { body: { note: n, commentaire: com } }); upsert(S.commandes, r.commande); render(); toast('Merci !', 'Votre avis aide toute l’équipe.'); } catch (e) { toast('Impossible', e.message, true); }
+}
+function recommander(id) {
+  const c = S.commandes.find(x => x.id === id); let n = 0;
+  c.lignes.forEach(l => {
+    const p = S.menu.plats.find(x => x.id === l.platId); if (!p) return;
+    const sel = {};
+    (p.options || []).forEach(g => { sel[g.id] = g.choix.filter(ch => l.options.some(o => o.groupe === g.nom && o.choix === ch.nom)).map(ch => ch.id); });
+    let unit = p.prix; (p.options || []).forEach(g => sel[g.id].forEach(cid => unit += g.choix.find(x => x.id === cid).prix));
+    S.cart.push({ key: p.id + '|' + JSON.stringify(sel) + '|' + (l.note || '') + '|' + Date.now() + n, platId: p.id, nom: p.nom, prixUnit: unit, qte: l.qte, options: sel, optionsTxt: l.options.map(o => o.choix).join(', '), note: l.note || '' });
+    n++;
+  });
+  saveCart(); go('panier');
+  if (n < c.lignes.length) toast('Certains plats ne sont plus disponibles', 'Nous avons ajouté le reste au panier.', true);
+}
+function upsert(arr, obj, front) { const i = arr.findIndex(x => x.id === obj.id); if (i >= 0) arr[i] = obj; else if (front) arr.unshift(obj); else arr.unshift(obj); }
+
+// =====================================================================
+// SERVICES : réservation, devis, discussion, fidélité
+// =====================================================================
+function vServices() {
+  const r = S.menu.resto;
+  let h = `<div class="page-t h">Services</div><div class="svc">
+    <div class="sv dark" onclick="openResa()"><div class="s1" style="background:var(--rouge)"></div><div class="s2"></div><div class="h">Réserver une table</div><p>Salle, terrasse ou espace privé</p></div>
+    <div class="sv red" onclick="openDevis()"><div class="s1" style="background:var(--jaune)"></div><div class="s2"></div><span class="premium">Premium</span><div class="h">Événement & traiteur</div><p>Devis personnalisé sous 24 h</p></div>
+    <div class="sv" onclick="openChat()"><div class="s1" style="background:var(--vert)"></div><div class="s2"></div><div class="h">Discuter avec nous</div><p>Une question, une demande spéciale</p></div>
+    <div class="sv" onclick="go('profil')"><div class="s1" style="background:var(--jaune)"></div><div class="s2"></div><div class="h">Fidélité</div><p>1 point tous les 1 000 F</p></div>
+    ${r.tel ? `<a class="sv" href="tel:${esc(r.tel)}" style="text-decoration:none;color:inherit"><div class="s1" style="background:var(--rouge)"></div><div class="s2"></div><div class="h">Appeler</div><p>${esc(r.tel)}</p></a>` : ''}
+    ${r.whatsapp ? `<a class="sv dark" href="https://wa.me/${esc(r.whatsapp.replace(/\D/g, ''))}" target="_blank" rel="noopener" style="text-decoration:none"><div class="s1" style="background:var(--jaune)"></div><div class="s2"></div><div class="h">WhatsApp</div><p>Écrivez-nous directement</p></a>` : ''}
+  </div>
+  <div class="box" style="margin-top:18px"><div class="box-t">Infos pratiques</div>
+    <div class="tot"><span>Adresse</span><b style="text-align:right">${esc(r.adresse)}</b></div>
+    <div class="tot"><span>Horaires</span><b style="text-align:right">${esc(r.horaires)}</b></div>
+    <div class="tot"><span>Livraison</span><b>${F(r.fraisLivraison)} · ${esc(r.delai)}</b></div>
+    <div class="tot"><span>En ce moment</span><b style="color:${r.ouvert ? 'var(--vert3)' : 'var(--rouge2)'}">${r.ouvert ? 'Ouvert' : 'Fermé'}</b></div>
+  </div>`;
+  if (S.reservations.length) h += `<div class="grp-t h">Mes réservations</div>` + S.reservations.map(x => `<div class="box"><div class="hist"><b>${x.date.split('-').reverse().join('/')} · ${esc(x.heure)}</b>${resaBadge(x.statut)}</div>
+      <div class="note">${x.personnes} pers. · ${esc(x.espace)}${x.occasion ? ' · ' + esc(x.occasion) : ''}</div>${x.reponse ? `<div class="note"><b>Réponse :</b> ${esc(x.reponse)}</div>` : ''}
+      ${['demandee', 'confirmee'].includes(x.statut) ? `<button class="btn ghost sm" style="margin-top:8px" onclick="annulerResa(${x.id})">Annuler</button>` : ''}</div>`).join('');
+  if (S.devis.length) h += `<div class="grp-t h">Mes devis</div>` + S.devis.map(d => `<div class="box"><div class="hist"><b>${esc(d.evenement)} · ${d.date.split('-').reverse().join('/')}</b>${devisBadge(d.statut)}</div>
+      <div class="note">${d.invites} invités${d.lieu ? ' · ' + esc(d.lieu) : ''}</div>
+      ${d.statut === 'propose' || d.statut === 'accepte' ? `<div class="tot big" style="font-size:24px"><span>Proposition</span><span>${F(d.montant)}</span></div>` : ''}
+      ${d.reponse ? `<div class="note">${esc(d.reponse)}</div>` : ''}
+      ${d.statut === 'propose' ? `<div style="display:flex;gap:8px;margin-top:10px"><button class="btn sm vert" onclick="decisionDevis(${d.id},true)">Accepter</button><button class="btn ghost sm" onclick="decisionDevis(${d.id},false)">Refuser</button></div>` : ''}</div>`).join('');
+  return h;
+}
+const resaBadge = s => ({ demandee: '<span class="badge jaune">En attente</span>', confirmee: '<span class="badge vert">Confirmée</span>', refusee: '<span class="badge rouge">Refusée</span>', annulee: '<span class="badge">Annulée</span>', honoree: '<span class="badge vert">Honorée</span>' }[s] || '');
+const devisBadge = s => ({ nouveau: '<span class="badge jaune">Étude en cours</span>', propose: '<span class="badge jaune">Proposition reçue</span>', accepte: '<span class="badge vert">Accepté</span>', refuse: '<span class="badge rouge">Refusé</span>', termine: '<span class="badge">Terminé</span>' }[s] || '');
+function needAuth(fn) { if (S.client && !S.client.invite) return true; openAuth(fn, 'inscription', true); return false; }
+function openResa() {
+  if (!needAuth(openResa)) return;
+  const d = new Date(); d.setDate(d.getDate() + (d.getHours() >= 20 ? 1 : 0));
+  openSheet(`<button class="x" onclick="closeSheet()">×</button><div class="bd" style="padding-top:26px"><div class="ttl h">Réserver une table</div>
+    <div class="two"><div class="fld"><label>Date</label><input id="r-date" type="date" value="${d.toISOString().slice(0, 10)}" min="${new Date().toISOString().slice(0, 10)}"></div>
+    <div class="fld"><label>Heure</label><input id="r-heure" type="time" value="20:00"></div></div>
+    <div class="two"><div class="fld"><label>Personnes</label><input id="r-pers" type="number" inputmode="numeric" min="1" value="2"></div>
+    <div class="fld"><label>Espace</label><select id="r-esp"><option>Salle</option><option>Terrasse</option><option>Espace privé</option><option>Privatisation complète</option></select></div></div>
+    <div class="fld"><label>Occasion (facultatif)</label><select id="r-occ"><option value="">Aucune en particulier</option><option>Anniversaire</option><option>Repas d’affaires</option><option>Dîner en amoureux</option><option>Fête de famille</option></select></div>
+    <div class="fld"><label>Demande particulière</label><textarea id="r-note" placeholder="Gâteau, décoration, chaise bébé…"></textarea></div>
+    <div class="err-t" id="r-err"></div>
+    <button class="btn full" onclick="sendResa()"><span class="h">Envoyer la demande</span></button>
+    <p class="note" style="text-align:center">Le restaurant confirme votre réservation par notification.</p></div>`);
+}
+async function sendResa() {
+  try {
+    const r = await api('/api/reservations', { body: { date: $('r-date').value, heure: $('r-heure').value, personnes: $('r-pers').value, espace: $('r-esp').value, occasion: $('r-occ').value, note: $('r-note').value } });
+    S.reservations.unshift(r.reservation); closeSheet(); go('services'); toast('Demande envoyée', 'Vous recevrez la confirmation ici.');
+  } catch (e) { $('r-err').textContent = e.message; }
+}
+async function annulerResa(id) { if (!confirm('Annuler cette réservation ?')) return; try { const r = await api(`/api/reservations/${id}/annuler`, { body: {} }); upsert(S.reservations, r.reservation); render(); } catch (e) { toast('Impossible', e.message, true); } }
+function openDevis() {
+  if (!needAuth(openDevis)) return;
+  openSheet(`<button class="x" onclick="closeSheet()">×</button><div class="bd" style="padding-top:26px"><span class="pill jour">Service premium</span><div class="ttl h" style="margin-top:8px">Demande de devis</div>
+    <p class="desc">Mariage, anniversaire, baptême, séminaire, cocktail d’entreprise… Dites-nous tout, on vous répond avec un prix.</p>
+    <div class="fld"><label>Type d’événement</label><select id="d-evt"><option>Anniversaire</option><option>Mariage / dot</option><option>Baptême</option><option>Séminaire / entreprise</option><option>Cocktail</option><option>Funérailles</option><option>Autre</option></select></div>
+    <div class="two"><div class="fld"><label>Date</label><input id="d-date" type="date" min="${new Date().toISOString().slice(0, 10)}"></div><div class="fld"><label>Invités</label><input id="d-inv" type="number" inputmode="numeric" value="30" min="1"></div></div>
+    <div class="fld"><label>Formule</label><select id="d-form"><option>Repas sur place (privatisation)</option><option>Traiteur livré sur votre lieu</option><option>Traiteur + service à table</option><option>Buffet</option></select></div>
+    <div class="two"><div class="fld"><label>Lieu</label><input id="d-lieu" placeholder="Commune / salle"></div><div class="fld"><label>Budget (F)</label><input id="d-bud" type="number" inputmode="numeric" placeholder="Facultatif"></div></div>
+    <div class="fld"><label>Vos souhaits</label><textarea id="d-desc" placeholder="Plats souhaités, boissons, gâteau, déco…"></textarea></div>
+    <div class="err-t" id="d-err"></div>
+    <button class="btn full" onclick="sendDevis()"><span class="h">Demander mon devis</span></button></div>`);
+}
+async function sendDevis() {
+  try {
+    const r = await api('/api/devis', { body: { evenement: $('d-evt').value, date: $('d-date').value, invites: $('d-inv').value, formule: $('d-form').value, lieu: $('d-lieu').value, budget: $('d-bud').value, description: $('d-desc').value } });
+    S.devis.unshift(r.devis); closeSheet(); go('services'); toast('Demande envoyée', 'Le restaurant prépare votre devis.');
+  } catch (e) { $('d-err').textContent = e.message; }
+}
+async function decisionDevis(id, ok) { try { const r = await api(`/api/devis/${id}/decision`, { body: { accepte: ok } }); upsert(S.devis, r.devis); render(); toast(ok ? 'Devis accepté' : 'Devis refusé', ok ? 'Le restaurant vous recontacte pour finaliser.' : ''); } catch (e) { toast('Impossible', e.message, true); } }
+
+function openChat() { if (!S.client) return openAuth(openChat, S.table ? 'invite' : 'inscription'); closeSheet(); go('chat'); }
+function vChat() {
+  S.chat.forEach(m => m.vu = true);
+  const msgs = S.chat.length ? S.chat.map(m => `<div class="msg ${m.de === 'client' ? 'me' : 'them'}">${esc(m.texte)}<time>${fheure(m.at)}</time></div>`).join('')
+    : `<div class="empty" style="padding-top:10px"><div class="shape"></div><div class="h">Bonjour !</div>Posez votre question, l’équipe vous répond ici.</div>`;
+  return `<div class="page-t h">Discussion</div><div class="chat" style="padding-bottom:90px">${msgs}<div id="chat-end"></div></div>
+    <div class="chat-in"><div class="in"><input id="chat-t" placeholder="Votre message…" onkeydown="if(event.key==='Enter')sendChat()" autocomplete="off"><button class="btn" onclick="sendChat()">Envoyer</button></div></div>`;
+}
+async function sendChat() {
+  const i = $('chat-t'); const t = i.value.trim(); if (!t) return; i.value = '';
+  try { const r = await api('/api/client/chat', { body: { texte: t } }); if (!S.chat.some(m => m.id === r.message.id)) S.chat.push(r.message); render(); $('chat-t').focus(); }
+  catch (e) { toast('Message non envoyé', e.message, true); i.value = t; }
+}
+
+// =====================================================================
+// PROFIL, NOTIFICATIONS, CONNEXION
+// =====================================================================
+function vProfil() {
+  const c = S.client, r = S.menu.resto;
+  if (!c) return `<div class="page-t h">Profil</div><div class="empty"><div class="shape"></div><div class="h">Bienvenue</div>Créez votre compte en 30 secondes pour commander, suivre vos plats et cumuler des points.<br><br><button class="btn" onclick="openAuth(()=>go('profil'))">Créer un compte / Se connecter</button></div>`;
+  const val = r.seuilPoints && c.points >= r.seuilPoints ? `soit ${F(c.points * r.valeurPoint)} de réduction disponible` : `Encore ${Math.max(0, r.seuilPoints - c.points)} points avant votre première réduction`;
+  return `<div class="page-t h">Bonjour ${esc(c.nom.split(' ')[0])}</div>
+    ${c.invite ? `<div class="ask"><b>Compte invité</b><p>Créez un vrai compte pour garder vos commandes et gagner des points.</p><button class="btn sm" onclick="openAuth(()=>go('profil'),'inscription',true)">Créer mon compte</button></div>` : `
+    <div class="fid"><div style="font-size:14px;font-weight:700;position:relative">Mes points fidélité</div><div class="h">${c.points}</div><p>${val}. 1 point par tranche de 1 000 F dépensés.</p></div>`}
+    ${pushAsk(true)}
+    <div class="box"><div class="box-t">Mes infos</div>
+      <div class="fld"><label>Nom</label><input id="p-nom" value="${esc(c.nom)}"></div>
+      ${c.tel ? `<div class="fld"><label>Téléphone</label><input value="${esc(c.tel)}" readonly></div>` : ''}
+      <div class="fld"><label>Adresse de livraison habituelle</label><textarea id="p-adr">${esc(c.adresse || '')}</textarea></div>
+      <button class="btn vert sm" style="margin-top:12px" onclick="saveProfil()">Enregistrer</button></div>
+    <div class="box"><div class="toggle"><div><b>Notifications</b><div class="note" style="margin:0">${notifState()}</div></div><button class="sw ${c.notifs && Notification.permission === 'granted' ? 'on' : ''}" onclick="enablePush(true)"></button></div></div>
+    <div class="box" onclick="go('notifs')" style="cursor:pointer"><div class="hist"><b>Mes notifications</b><span class="badge ${S.notifs.some(n => !n.lu) ? 'rouge' : ''}">${S.notifs.filter(n => !n.lu).length} non lue(s)</span></div></div>
+    <div style="padding:6px 18px"><button class="btn ghost full" onclick="logout()">Se déconnecter</button></div>`;
+}
+function notifState() {
+  if (!('Notification' in window) || !('serviceWorker' in navigator)) return 'Non prises en charge sur ce navigateur — gardez l’app ouverte';
+  if (!window.isSecureContext) return 'Nécessitent une adresse sécurisée (https)';
+  if (Notification.permission === 'denied') return 'Bloquées dans les réglages du navigateur';
+  return S.client && S.client.notifs && Notification.permission === 'granted' ? 'Activées : commande prête, cuisine du jour, réponses' : 'Être prévenu quand votre plat est prêt';
+}
+function pushAsk(small) {
+  if (!S.client || !('Notification' in window) || !window.isSecureContext || !('serviceWorker' in navigator)) return '';
+  if (Notification.permission === 'granted' && S.client.notifs) return '';
+  if (Notification.permission === 'denied') return '';
+  return `<div class="ask"><b>Soyez prévenu</b><p>${small ? 'Recevez la cuisine du jour et les offres' : 'Recevez une notification dès que votre plat est prêt'}, même téléphone verrouillé.</p><button class="btn sm" onclick="enablePush(true)">Activer les notifications</button></div>`;
+}
+async function saveProfil() {
+  try { const r = await api('/api/client/moi', { method: 'PUT', body: { nom: $('p-nom').value, adresse: $('p-adr').value } }); S.client = r.client; toast('Enregistré', ''); render(); } catch (e) { toast('Erreur', e.message, true); }
+}
+function vNotifs() {
+  return `<div class="page-t h">Notifications</div><div class="box">${S.notifs.length ? S.notifs.map(n => `<div class="notif ${n.lu ? '' : 'nv'}"><span class="nd"></span><div><b>${esc(n.titre)}</b><p>${esc(n.corps)}</p><time>${fdate(n.at)}</time></div></div>`).join('') : '<div class="empty">Aucune notification pour le moment.</div>'}</div>`;
+}
+let authNext = null;
+function openAuth(next, tab, noGuest) {
+  authNext = next || null;
+  tab = tab || 'inscription';
+  const guest = !noGuest && (S.table || tab === 'invite');
+  openSheet(`<button class="x" onclick="closeSheet()">×</button><div class="bd" style="padding-top:26px">
+    <div class="ttl h">${tab === 'connexion' ? 'Se connecter' : guest && tab === 'invite' ? 'Votre prénom' : 'Créer un compte'}</div>
+    ${tab === 'invite' && guest ? `<p class="desc">Pour que le serveur sache à qui apporter le plat.</p>
+      <div class="fld"><label>Prénom</label><input id="a-nom" autocomplete="given-name" placeholder="Ex. : Awa"></div>
+      <div class="err-t" id="a-err"></div><button class="btn full" onclick="authGo('invite')"><span class="h">Continuer</span></button>
+      <p class="note" style="text-align:center">Vous préférez cumuler des points ? <a href="#" onclick="openAuth(authNext,'inscription');return false">Créer un compte</a></p>`
+    : tab === 'connexion' ? `<div class="fld"><label>Téléphone</label><input id="a-tel" type="tel" inputmode="tel" autocomplete="tel"></div>
+      <div class="fld"><label>Code secret (4 chiffres)</label><input id="a-pin" type="password" inputmode="numeric" maxlength="4"></div>
+      <div class="err-t" id="a-err"></div><button class="btn full" onclick="authGo('connexion')"><span class="h">Se connecter</span></button>
+      <p class="note" style="text-align:center">Pas encore de compte ? <a href="#" onclick="openAuth(authNext,'inscription');return false">Créer un compte</a></p>`
+    : `<p class="desc">Suivez vos commandes en direct et gagnez des points à chaque repas.</p>
+      <div class="fld"><label>Nom et prénom</label><input id="a-nom" autocomplete="name"></div>
+      <div class="fld"><label>Téléphone</label><input id="a-tel" type="tel" inputmode="tel" autocomplete="tel" value="${esc(LS.get('resto_tel', ''))}"></div>
+      <div class="fld"><label>Choisissez un code secret (4 chiffres)</label><input id="a-pin" type="password" inputmode="numeric" maxlength="4"></div>
+      <div class="err-t" id="a-err"></div><button class="btn full" onclick="authGo('inscription')"><span class="h">Créer mon compte</span></button>
+      <p class="note" style="text-align:center">Déjà inscrit ? <a href="#" onclick="openAuth(authNext,'connexion');return false">Se connecter</a>${guest ? ` · <a href="#" onclick="openAuth(authNext,'invite');return false">Juste mon prénom</a>` : ''}</p>`}
+  </div>`);
+}
+async function authGo(kind) {
+  const v = id => ($(id) ? $(id).value.trim() : '');
+  try {
+    const r = await api('/api/client/' + kind, { body: { nom: v('a-nom'), tel: v('a-tel'), pin: v('a-pin'), table: S.table }, noLogout: true });
+    S.token = r.token; S.client = r.client; LS.set('resto_token', r.token);
+    closeSheet(); await loadMine(); connectStream();
+    toast(kind === 'connexion' ? 'Content de vous revoir' : 'Bienvenue ' + r.client.nom.split(' ')[0], '');
+    const n = authNext; authNext = null; if (n) n(); else render();
+  } catch (e) { $('a-err').textContent = e.message; }
+}
+async function logout() {
+  let endpoint = '';
+  try { const reg = await navigator.serviceWorker.getRegistration(); const sub = reg && await reg.pushManager.getSubscription(); if (sub) { endpoint = sub.endpoint; } } catch (e) { }
+  try { await api('/api/client/deconnexion', { body: { endpoint } }); } catch (e) { }
+  S.token = ''; S.client = null; S.commandes = []; S.notifs = []; S.chat = []; S.reservations = []; S.devis = [];
+  LS.set('resto_token', ''); if (es) es.close(); go('accueil');
+}
+
+// =====================================================================
+// NOTIFICATIONS PUSH
+// =====================================================================
+const b64ToU8 = s => { const p = '='.repeat((4 - s.length % 4) % 4); const b = atob((s + p).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from([...b].map(c => c.charCodeAt(0))); };
+async function enablePush(ask) {
+  if (!S.client || !('serviceWorker' in navigator) || !('PushManager' in window) || !window.isSecureContext) {
+    if (ask) toast('Notifications indisponibles', 'Ce navigateur ne les accepte pas ici. Gardez l’app ouverte : vous serez quand même prévenu.', true);
+    return;
+  }
+  try {
+    let perm = Notification.permission;
+    if (perm === 'default' && ask) perm = await Notification.requestPermission();
+    if (perm !== 'granted') { if (ask) toast('Notifications refusées', 'Vous pouvez les réactiver dans les réglages du navigateur.', true); return; }
+    const reg = await navigator.serviceWorker.register('/sw.js');
+    await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToU8(S.menu.vapidKey) });
+    await api('/api/client/push', { body: { subscription: sub.toJSON() } });
+    S.client.notifs = true;
+    if (ask) { toast('Notifications activées', 'Vous serez prévenu même téléphone verrouillé.'); render(); }
+  } catch (e) { if (ask) toast('Activation impossible', e.message, true); }
+}
+
+// =====================================================================
+// TEMPS RÉEL
+// =====================================================================
+let es = null;
+function connectStream() {
+  if (es) es.close();
+  if (!S.token || !window.EventSource) return;
+  es = new EventSource('/api/stream/client?token=' + encodeURIComponent(S.token));
+  es.addEventListener('commande', e => {
+    const c = JSON.parse(e.data); upsert(S.commandes, c);
+    if (S.vue === 'commandes') { Object.values(S.maps).forEach(m => m.map.remove()); S.maps = {}; render(); } else badges();
+  });
+  es.addEventListener('notif', e => {
+    const n = JSON.parse(e.data); S.notifs.unshift(n); ding();
+    toast(n.titre, n.corps, false, () => go(n.type === 'commande' ? 'commandes' : n.type === 'chat' ? 'chat' : n.type === 'reservation' || n.type === 'devis' ? 'services' : 'notifs'));
+    badges();
+  });
+  es.addEventListener('annonce', e => { const a = JSON.parse(e.data); S.notifs.unshift({ id: a.id, titre: a.titre, corps: a.corps, at: a.at, type: 'annonce', lu: false }); ding(); toast(a.titre, a.corps, false, () => go('notifs')); badges(); });
+  es.addEventListener('chat', e => {
+    const m = JSON.parse(e.data); if (S.chat.some(x => x.id === m.id)) return;
+    S.chat.push(m);
+    if (m.de === 'resto') { if (S.vue === 'chat') m.vu = true; else { ding(); toast('Nouveau message', m.texte, false, openChat); } }
+    if (S.vue === 'chat') render(); else badges();
+  });
+  es.addEventListener('position', e => { const d = JSON.parse(e.data); const c = S.commandes.find(x => x.id === d.id); if (c) c.livreurPos = d.pos; const m = S.maps[d.id]; if (m) { m.liv.setLatLng([d.pos.lat, d.pos.lng]); m.liv.setTooltipContent && m.liv.setTooltipContent('Livreur'); } });
+  es.addEventListener('reservation', e => { upsert(S.reservations, JSON.parse(e.data)); if (S.vue === 'services') render(); });
+  es.addEventListener('devis', e => { upsert(S.devis, JSON.parse(e.data)); if (S.vue === 'services') render(); });
+  es.addEventListener('menu', () => loadMenu().then(() => { if (['accueil', 'services', 'panier'].includes(S.vue)) render(); }));
+  es.onerror = () => { if (!S.token) es.close(); };
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && S.client) loadMine().then(() => { if (S.vue !== 'chat' && S.vue !== 'panier') render(); }); });
+if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', e => { if (e.data && e.data.type === 'open') { const v = new URL(e.data.url, location.href).searchParams.get('vue'); if (v) go(v); } });
+
+// =====================================================================
+// DÉMARRAGE
+// =====================================================================
+async function loadMenu() {
+  S.menu = await api('/api/public/menu');
+  const r = S.menu.resto;
+  $('r-nom').textContent = r.nom; document.title = r.nom + ' — Commander';
+  $('r-adr').innerHTML = `${esc(r.adresse)} <span class="dot">›</span>`;
+}
+async function loadMine() {
+  if (!S.token) return;
+  try {
+    const d = await api('/api/client/donnees');
+    S.client = d.client; S.commandes = d.commandes; S.notifs = d.notifs; S.reservations = d.reservations; S.devis = d.devis;
+    const seen = new Set(S.chat.filter(m => m.vu).map(m => m.id)); S.chat = d.chat.map(m => Object.assign(m, { vu: seen.has(m.id) || m.de === 'client' }));
+  } catch (e) { if (!S.token) S.client = null; }
+}
+(async function init() {
+  const q = new URLSearchParams(location.search);
+  const t = Number(q.get('table') || sessionStorage.getItem('resto_table') || 0);
+  if (t > 0) { S.table = t; S.mode = 'sur_place'; try { sessionStorage.setItem('resto_table', t); } catch (e) { } }
+  try { await loadMenu(); }
+  catch (e) { $('vue').innerHTML = `<div class="empty"><div class="shape"></div><div class="h">Connexion impossible</div>${esc(e.message)}<br><br><button class="btn" onclick="location.reload()">Réessayer</button></div>`; return; }
+  await loadMine();
+  connectStream();
+  go(q.get('vue') || 'accueil');
+  if (S.client && S.client.notifs && 'Notification' in window && Notification.permission === 'granted') enablePush(false);
+  if ('serviceWorker' in navigator && window.isSecureContext) navigator.serviceWorker.register('/sw.js').catch(() => { });
+  if (q.has('vue') || q.has('table')) history.replaceState(null, '', location.pathname);
+})();
+</script>
+</body>
+</html>

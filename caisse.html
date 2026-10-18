@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0B3D2C">
+<link rel="icon" href="/icon.svg">
+<title>Caisse du restaurant</title>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<link rel="stylesheet" href="/admin.css">
+<style>
+.bars{display:flex;align-items:flex-end;gap:6px;height:190px;padding-top:10px;}
+.bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;}
+.bar .bb{width:100%;display:flex;gap:2px;align-items:flex-end;height:160px;}
+.bar .bb i{flex:1;border-radius:6px 6px 2px 2px;min-height:2px;}
+.bar .bb i.e{background:var(--vert3);}
+.bar .bb i.s{background:var(--rouge);}
+.bar small{font-size:10.5px;color:var(--gris4);white-space:nowrap;}
+.legend{display:flex;gap:16px;font-size:12.5px;font-weight:600;color:var(--gris4);}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px;}
+.hbar{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13.5px;}
+.hbar span{width:170px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hbar .tr{flex:1;height:12px;background:var(--gris);border-radius:6px;overflow:hidden;}
+.hbar .tr i{display:block;height:100%;border-radius:6px;background:var(--rouge);}
+.hbar.e .tr i{background:var(--vert3);}
+.hbar b{width:110px;text-align:right;flex-shrink:0;}
+.pos{color:var(--vert3);}
+.neg{color:var(--rouge2);}
+.quick{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.quick button{padding:7px 12px;border-radius:999px;background:var(--gris);font-weight:700;font-size:12.5px;}
+.quick button:hover{background:var(--jaunep);}
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px;}
+.filters .fld{margin:0;}
+.foot td{font-weight:800;background:var(--gris);}
+.low td{background:#FFF6F5;}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="logo"></div>
+  <div class="brand"><div class="h" id="c-nom">Caisse</div><small>Caisse & comptabilité · <span class="live" id="live"><i></i><span>connexion…</span></span></small></div>
+  <div class="tb-r">
+    <a class="tb-btn red" href="/gestion.html">Gestion des commandes</a>
+    <button class="tb-btn" onclick="logout()">Déconnexion</button>
+  </div>
+</header>
+<nav class="nav" id="nav">
+  <button class="nb on" data-p="bord">Tableau de bord</button>
+  <button class="nb" data-p="journal">Journal de caisse</button>
+  <button class="nb" data-p="sorties">Sorties & charges</button>
+  <button class="nb" data-p="stock">Stock & inventaire <span class="cnt" id="n-low"></span></button>
+  <button class="nb" data-p="rapports">Rapports</button>
+</nav>
+<main class="content">
+  <section class="panel on" id="p-bord"></section>
+  <section class="panel" id="p-journal"></section>
+  <section class="panel" id="p-sorties"></section>
+  <section class="panel" id="p-stock"></section>
+  <section class="panel" id="p-rapports"></section>
+</main>
+
+<script src="/admin-commun.js"></script>
+<script>
+let D = null, P = 'bord';
+const CATS_SORTIE = ['Achats marchandises', 'Salaires', 'Loyer', 'Électricité / eau', 'Gaz / charbon', 'Transport / livraison', 'Entretien / réparation', 'Emballages', 'Taxes & impôts', 'Marketing', 'Divers'];
+const CATS_ENTREE = ['Ventes', 'Acompte événement', 'Apport', 'Divers'];
+const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+const isCash = m => (m.paiement || 'especes') === 'especes';
+const sum = (arr, f) => arr.reduce((s, x) => s + (f ? f(x) : x), 0);
+
+document.querySelectorAll('#nav .nb').forEach(b => b.onclick = () => show(b.dataset.p));
+function show(p) { P = p; document.querySelectorAll('#nav .nb').forEach(b => b.classList.toggle('on', b.dataset.p === p)); document.querySelectorAll('.panel').forEach(x => x.classList.toggle('on', x.id === 'p-' + p)); render(); }
+async function load() { D = await api('/api/admin/bootstrap'); $('c-nom').textContent = 'Caisse — ' + D.settings.resto.nom; }
+let reloadT;
+const reload = () => { clearTimeout(reloadT); reloadT = setTimeout(async () => { await load(); render(); }, 400); };
+adminBoot(async () => {
+  await load(); render();
+  adminStream({
+    mouvement: m => { reload(); if (m && m.type === 'entree' && m.auto) toast('Encaissement automatique', `${m.libelle} · ${F(m.montant)}`); },
+    commande: () => reload(),
+    alerte: a => toast(a.titre, a.corps, true)
+  }, on => { $('live').classList.toggle('on', on); $('live').querySelector('span').textContent = on ? 'en direct' : 'reconnexion…'; });
+});
+function render() {
+  if (!D) return;
+  ({ bord: rBord, journal: rJournal, sorties: rSorties, stock: rStock, rapports: rRapports })[P]();
+  $('n-low').textContent = D.stock.filter(s => s.quantite <= s.seuil).length || '';
+}
+const mvDay = d => D.mouvements.filter(m => m.date === d);
+const mvMonth = ym => D.mouvements.filter(m => m.date.startsWith(ym));
+const IN = arr => sum(arr.filter(m => m.type === 'entree'), m => m.montant);
+const OUT = arr => sum(arr.filter(m => m.type === 'sortie'), m => m.montant);
+
+// ===================================================================
+// TABLEAU DE BORD
+// ===================================================================
+function rBord() {
+  const td = todayStr(), ym = td.slice(0, 7);
+  const cash = (D.settings.fondsCaisse || 0) + IN(D.mouvements.filter(isCash)) - OUT(D.mouvements.filter(isCash));
+  const mobileM = IN(mvMonth(ym).filter(m => !isCash(m)));
+  const day = mvDay(td), month = mvMonth(ym);
+  const res = IN(month) - OUT(month);
+  const low = D.stock.filter(s => s.quantite <= s.seuil);
+  // 14 derniers jours
+  const days = []; for (let i = 13; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); days.push(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')); }
+  const dv = days.map(d => ({ d, e: IN(mvDay(d)), s: OUT(mvDay(d)) }));
+  const max = Math.max(1, ...dv.map(x => Math.max(x.e, x.s)));
+  const outCat = {}; month.filter(m => m.type === 'sortie').forEach(m => outCat[m.categorie] = (outCat[m.categorie] || 0) + m.montant);
+  const oc = Object.entries(outCat).sort((a, b) => b[1] - a[1]); const ocMax = Math.max(1, ...oc.map(x => x[1]));
+  const autoToday = day.filter(m => m.auto && m.commandeId);
+  $('p-bord').innerHTML = `<div class="ph-t"><div><div class="h">Tableau de bord</div><p>Chaque commande terminée est inscrite ici automatiquement. Vous n’avez qu’à saisir les sorties.</p></div>
+      <div class="row"><button class="btn ghost" onclick="newMv('entree')">+ Entrée</button><button class="btn" onclick="newMv('sortie')">+ Sortie de caisse</button></div></div>
+    <div class="kpis">
+      <div class="kpi vert"><div class="l">Espèces en caisse</div><div class="v">${F(cash)}</div><div class="s">fonds ${F(D.settings.fondsCaisse)} + entrées − sorties</div></div>
+      <div class="kpi"><div class="l">Aujourd’hui</div><div class="v pos">+ ${F(IN(day))}</div><div class="s neg">− ${F(OUT(day))} de sorties</div></div>
+      <div class="kpi jaune"><div class="l">Mobile money (mois)</div><div class="v">${F(mobileM)}</div><div class="s">Wave, Orange, MTN, Moov</div></div>
+      <div class="kpi rouge"><div class="l">Résultat de ${MOIS[new Date().getMonth()]}</div><div class="v ${res >= 0 ? 'pos' : 'neg'}">${res >= 0 ? '' : '− '}${F(Math.abs(res))}</div><div class="s">${F(IN(month))} entrées · ${F(OUT(month))} sorties</div></div>
+    </div>
+    <div class="grid2" style="grid-template-columns:2fr 1fr;align-items:start">
+      <div class="card"><div class="card-t"><span>14 derniers jours</span><span class="legend"><span><i style="background:var(--vert3)"></i>Entrées</span><span><i style="background:var(--rouge)"></i>Sorties</span></span></div>
+        <div class="bars">${dv.map(x => `<div class="bar" title="${dmy(x.d)} : +${F(x.e)} / −${F(x.s)}"><div class="bb"><i class="e" style="height:${x.e / max * 100}%"></i><i class="s" style="height:${x.s / max * 100}%"></i></div><small>${x.d.slice(8)}/${x.d.slice(5, 7)}</small></div>`).join('')}</div></div>
+      <div class="card"><div class="card-t">Contrôle de caisse</div>
+        <p class="hint" style="margin-bottom:10px">Comptez les billets et pièces : l’écart avec le montant théorique s’affiche.</p>
+        <div class="fld"><label>Montant compté (F)</label><input type="number" id="cpt" oninput="ecart(${cash})"></div>
+        <div id="ecart" style="font-weight:800;font-size:18px"></div>
+        <div class="fld" style="margin-top:14px"><label>Fonds de caisse initial (F)</label><div class="row"><input type="number" id="fonds" value="${D.settings.fondsCaisse || 0}" style="flex:1;padding:11px 13px;border-radius:12px;border:1.5px solid var(--gris2)"><button class="btn ghost sm" onclick="saveFonds()">OK</button></div></div></div>
+    </div>
+    <div class="grid3" style="margin-top:16px;align-items:start">
+      <div class="card"><div class="card-t">Encaissé automatiquement aujourd’hui</div>${autoToday.length ? autoToday.slice().reverse().slice(0, 12).map(m => `<div class="hbar e"><span>${esc(m.libelle)}</span><b class="pos">${F(m.montant)}</b></div>`).join('') : '<div class="empty">Aucune commande terminée aujourd’hui.</div>'}</div>
+      <div class="card"><div class="card-t">Sorties du mois</div>${oc.length ? oc.map(([k, v]) => `<div class="hbar"><span>${esc(k)}</span><div class="tr"><i style="width:${v / ocMax * 100}%"></i></div><b>${F(v)}</b></div>`).join('') : '<div class="empty">Aucune sortie ce mois-ci.</div>'}</div>
+      <div class="card"><div class="card-t">Stock bas</div>${low.length ? low.map(s => `<div class="hbar"><span>${esc(s.nom)}</span><b class="neg">${s.quantite} ${esc(s.unite)}</b></div>`).join('') + `<button class="btn ghost sm" style="margin-top:8px" onclick="show('stock')">Voir le stock</button>` : '<div class="empty">Tout est bien approvisionné.</div>'}</div>
+    </div>`;
+}
+function ecart(th) { const v = Number($('cpt').value); if (!$('cpt').value) return $('ecart').textContent = ''; const e = v - th; $('ecart').innerHTML = e === 0 ? '<span class="pos">Caisse juste</span>' : `<span class="${e > 0 ? 'pos' : 'neg'}">Écart : ${e > 0 ? '+' : '−'} ${F(Math.abs(e))}</span>`; }
+async function saveFonds() { try { const r = await api('/api/admin/resto', { method: 'PUT', body: { fondsCaisse: Number($('fonds').value) } }); D.settings.fondsCaisse = r.fondsCaisse; render(); toast('Fonds de caisse enregistré', ''); } catch (e) { toast('Erreur', e.message, true); } }
+
+// ===================================================================
+// OPÉRATION MANUELLE
+// ===================================================================
+function newMv(type, pre) {
+  pre = pre || {};
+  const cats = type === 'entree' ? CATS_ENTREE : CATS_SORTIE;
+  openModal(`<div class="mt h">${type === 'entree' ? 'Nouvelle entrée' : 'Sortie de caisse'}</div>
+    <div class="row"><div class="fld"><label>Catégorie</label><select id="mv-cat">${cats.map(c => `<option ${pre.categorie === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+    <div class="fld"><label>Date</label><input type="date" id="mv-date" value="${todayStr()}"></div></div>
+    <div class="fld"><label>Libellé</label><input id="mv-lib" value="${esc(pre.libelle || '')}" placeholder="${type === 'entree' ? 'Ex. : Acompte mariage Koffi' : 'Ex. : Salaire Aminata (cuisine)'}"></div>
+    <div class="row"><div class="fld"><label>Montant (F)</label><input type="number" id="mv-m"></div>
+    <div class="fld"><label>Mode</label><select id="mv-pay"><option value="especes">Espèces (caisse)</option><option value="mobile_money">Mobile money</option><option value="banque">Banque / virement</option></select></div></div>
+    <div class="fld"><label>Note</label><input id="mv-note"></div>
+    <div class="err" id="mv-err"></div>
+    <div class="mfoot"><button class="btn big ${type === 'entree' ? 'vert' : ''}" onclick="saveMv('${type}')">Enregistrer</button></div>`);
+  setTimeout(() => $(pre.libelle ? 'mv-m' : 'mv-lib').focus(), 50);
+}
+async function saveMv(type) {
+  try {
+    await api('/api/admin/mouvements', { body: { type, categorie: $('mv-cat').value, date: $('mv-date').value, libelle: $('mv-lib').value, montant: $('mv-m').value, paiement: $('mv-pay').value, note: $('mv-note').value } });
+    closeModal(); await load(); render(); toast('Opération enregistrée', '');
+  } catch (e) { $('mv-err').textContent = e.message; }
+}
+async function delMv(id) {
+  const m = D.mouvements.find(x => x.id === id);
+  const code = await askDeleteCode(`${m.libelle} — ${F(m.montant)}`); if (!code) return;
+  try { await api(`/api/admin/mouvements/${id}/delete`, { body: { code } }); await load(); render(); toast('Opération supprimée', ''); } catch (e) { toast('Suppression refusée', e.message, true); }
+}
+
+// ===================================================================
+// JOURNAL
+// ===================================================================
+const JF = { du: '', au: '', type: '', q: '' };
+function rJournal() {
+  if (!JF.du) { const d = new Date(); JF.du = todayStr().slice(0, 8) + '01'; JF.au = todayStr(); }
+  const list = D.mouvements.filter(m => m.date >= JF.du && m.date <= JF.au && (!JF.type || m.type === JF.type) && (!JF.q || (m.libelle + ' ' + m.categorie).toLowerCase().includes(JF.q.toLowerCase())))
+    .sort((a, b) => (b.date + b.at).localeCompare(a.date + a.at));
+  $('p-journal').innerHTML = `<div class="ph-t"><div><div class="h">Journal de caisse</div><p>Toutes les entrées et sorties. Les lignes « auto » viennent des commandes terminées et des approvisionnements.</p></div>
+      <div class="row"><button class="btn ghost" onclick="csv()">Exporter (Excel)</button><button class="btn ghost" onclick="newMv('entree')">+ Entrée</button><button class="btn" onclick="newMv('sortie')">+ Sortie</button></div></div>
+    <div class="card"><div class="filters">
+      <div class="fld"><label>Du</label><input type="date" value="${JF.du}" onchange="JF.du=this.value;rJournal()"></div>
+      <div class="fld"><label>Au</label><input type="date" value="${JF.au}" onchange="JF.au=this.value;rJournal()"></div>
+      <div class="fld"><label>Type</label><select onchange="JF.type=this.value;rJournal()"><option value="">Tout</option><option value="entree" ${JF.type === 'entree' ? 'selected' : ''}>Entrées</option><option value="sortie" ${JF.type === 'sortie' ? 'selected' : ''}>Sorties</option></select></div>
+      <div class="fld" style="flex:1"><label>Rechercher</label><input value="${esc(JF.q)}" onchange="JF.q=this.value;rJournal()" placeholder="Libellé ou catégorie"></div></div>
+      ${list.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Date</th><th>Heure</th><th>Catégorie</th><th>Libellé</th><th>Mode</th><th class="num">Entrée</th><th class="num">Sortie</th><th></th></tr></thead><tbody>
+      ${list.map(m => `<tr><td>${dmy(m.date)}</td><td>${m.at ? fheure(m.at) : ''}</td><td><span class="badge ${m.type === 'entree' ? 'vert' : 'rouge'}">${esc(m.categorie)}</span></td><td>${esc(m.libelle)}${m.auto ? ' <span class="badge">auto</span>' : ''}${m.note ? `<div class="hint">${esc(m.note)}</div>` : ''}</td>
+        <td>${PAY_LABEL[m.paiement] || (m.paiement === 'mobile_money' ? 'Mobile money' : m.paiement === 'banque' ? 'Banque' : 'Espèces')}</td><td class="num pos">${m.type === 'entree' ? F(m.montant) : ''}</td><td class="num neg">${m.type === 'sortie' ? F(m.montant) : ''}</td>
+        <td><button class="xbtn" title="Supprimer" onclick="delMv(${m.id})" style="width:30px;height:30px;border-radius:50%;background:var(--gris)">×</button></td></tr>`).join('')}
+      <tr class="foot"><td colspan="5">Total de la période · solde ${F(IN(list) - OUT(list))}</td><td class="num pos">${F(IN(list))}</td><td class="num neg">${F(OUT(list))}</td><td></td></tr></tbody></table></div>` : '<div class="empty"><div class="shape"></div>Aucune opération sur cette période.</div>'}</div>`;
+}
+function csv() {
+  const list = D.mouvements.filter(m => m.date >= JF.du && m.date <= JF.au).sort((a, b) => a.date.localeCompare(b.date));
+  const rows = [['Date', 'Type', 'Catégorie', 'Libellé', 'Mode', 'Montant']].concat(list.map(m => [dmy(m.date), m.type === 'entree' ? 'Entrée' : 'Sortie', m.categorie, m.libelle, m.paiement || '', (m.type === 'sortie' ? -1 : 1) * m.montant]));
+  const txt = '﻿' + rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([txt], { type: 'text/csv;charset=utf-8' })); a.download = `caisse_${JF.du}_${JF.au}.csv`; a.click();
+}
+
+// ===================================================================
+// SORTIES & CHARGES
+// ===================================================================
+function rSorties() {
+  const ym = todayStr().slice(0, 7);
+  const month = mvMonth(ym).filter(m => m.type === 'sortie');
+  const byCat = {}; month.forEach(m => byCat[m.categorie] = (byCat[m.categorie] || 0) + m.montant);
+  const fixed = ['Loyer', 'Salaires', 'Électricité / eau', 'Gaz / charbon'];
+  $('p-sorties').innerHTML = `<div class="ph-t"><div><div class="h">Sorties & charges</div><p>Saisissez ici tout l’argent qui sort : achats au marché, salaires, loyer, factures…</p></div></div>
+    <div class="grid2" style="align-items:start">
+      <div class="card"><div class="card-t">Saisie rapide</div>
+        <div class="quick">${CATS_SORTIE.map(c => `<button onclick="$('qs-cat').value='${c}'">${c}</button>`).join('')}</div>
+        <div class="row"><div class="fld"><label>Catégorie</label><select id="qs-cat">${CATS_SORTIE.map(c => `<option>${c}</option>`).join('')}</select></div><div class="fld"><label>Date</label><input type="date" id="qs-date" value="${todayStr()}"></div></div>
+        <div class="fld"><label>Libellé</label><input id="qs-lib" placeholder="Ex. : Marché d’Adjamé — tomates, oignons, piment"></div>
+        <div class="row"><div class="fld"><label>Montant (F)</label><input type="number" id="qs-m" onkeydown="if(event.key==='Enter')quickOut()"></div><div class="fld"><label>Mode</label><select id="qs-pay"><option value="especes">Espèces (caisse)</option><option value="mobile_money">Mobile money</option><option value="banque">Banque</option></select></div></div>
+        <div class="err" id="qs-err"></div><button class="btn big" onclick="quickOut()">Enregistrer la sortie</button>
+        <p class="hint" style="margin-top:10px">Pour un achat d’ingrédient suivi en stock, passez plutôt par Stock & inventaire › Approvisionner : le stock et la caisse sont mis à jour ensemble.</p></div>
+      <div class="card"><div class="card-t">Charges fixes de ${MOIS[new Date().getMonth()]}</div>
+        ${fixed.map(c => `<div class="hbar"><span>${c}</span><div class="tr" style="background:none"></div><b class="${byCat[c] ? 'neg' : ''}">${byCat[c] ? F(byCat[c]) : '<button class="btn ghost sm" onclick="newMv(\'sortie\',{categorie:\'' + c + '\',libelle:\'' + c + ' ' + MOIS[new Date().getMonth()] + '\'})">Saisir</button>'}</b></div>`).join('')}
+        <div class="card-t" style="margin-top:16px">Total des sorties du mois</div><div class="h neg" style="font-size:40px">${F(sum(month, m => m.montant))}</div>
+        ${Object.entries(byCat).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<div class="hbar"><span>${esc(k)}</span><div class="tr"><i style="width:${v / Math.max(...Object.values(byCat)) * 100}%"></i></div><b>${F(v)}</b></div>`).join('')}</div>
+    </div>
+    <div class="card" style="margin-top:16px"><div class="card-t">Dernières sorties</div>${month.length ? `<table class="tbl"><tbody>${month.slice().reverse().slice(0, 20).map(m => `<tr><td style="width:100px">${dmy(m.date)}</td><td><span class="badge rouge">${esc(m.categorie)}</span></td><td>${esc(m.libelle)}</td><td class="num neg"><b>${F(m.montant)}</b></td></tr>`).join('')}</tbody></table>` : '<div class="empty">Aucune sortie ce mois-ci.</div>'}</div>`;
+}
+async function quickOut() {
+  try {
+    await api('/api/admin/mouvements', { body: { type: 'sortie', categorie: $('qs-cat').value, date: $('qs-date').value, libelle: $('qs-lib').value || $('qs-cat').value, montant: $('qs-m').value, paiement: $('qs-pay').value } });
+    await load(); render(); toast('Sortie enregistrée', '');
+  } catch (e) { $('qs-err').textContent = e.message; }
+}
+
+// ===================================================================
+// STOCK & INVENTAIRE
+// ===================================================================
+function rStock() {
+  const val = sum(D.stock, s => Math.max(0, s.quantite) * (s.cout || 0));
+  const low = D.stock.filter(s => s.quantite <= s.seuil);
+  const name = id => (D.stock.find(s => s.id === id) || { nom: '—' }).nom;
+  const used = id => D.plats.filter(p => (p.recette || []).some(r => r.stockId === id)).map(p => p.nom);
+  $('p-stock').innerHTML = `<div class="ph-t"><div><div class="h">Stock & inventaire</div><p>Le stock baisse tout seul à chaque commande terminée, selon la recette de chaque plat (réglée dans Gestion › Menus & plats).</p></div><button class="btn" onclick="editStock()">+ Article de stock</button></div>
+    <div class="kpis"><div class="kpi vert"><div class="l">Valeur du stock</div><div class="v">${F(val)}</div></div><div class="kpi"><div class="l">Articles suivis</div><div class="v">${D.stock.length}</div></div>
+      <div class="kpi rouge"><div class="l">En alerte</div><div class="v">${low.length}</div><div class="s">${esc(low.map(s => s.nom).join(', '))}</div></div>
+      <div class="kpi jaune"><div class="l">Achats du mois</div><div class="v">${F(sum(mvMonth(todayStr().slice(0, 7)).filter(m => m.categorie === 'Achats marchandises'), m => m.montant))}</div></div></div>
+    <div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Article</th><th class="num">Quantité</th><th class="num">Seuil d’alerte</th><th>État</th><th class="num">Coût unitaire</th><th class="num">Valeur</th><th>Utilisé dans</th><th></th></tr></thead><tbody>
+      ${D.stock.map(s => `<tr class="${s.quantite <= s.seuil ? 'low' : ''}"><td><b>${esc(s.nom)}</b></td><td class="num"><b>${s.quantite}</b> ${esc(s.unite)}</td><td class="num">${s.seuil}</td>
+        <td>${s.quantite <= 0 ? '<span class="badge rouge">Épuisé</span>' : s.quantite <= s.seuil ? '<span class="badge jaune">À racheter</span>' : '<span class="badge vert">OK</span>'}</td>
+        <td class="num">${F(s.cout)}</td><td class="num">${F(Math.max(0, s.quantite) * s.cout)}</td><td style="max-width:220px;font-size:12.5px;color:var(--gris4)">${esc(used(s.id).join(', ') || '—')}</td>
+        <td style="white-space:nowrap"><button class="btn vert sm" onclick="appro(${s.id})">Approvisionner</button> <button class="btn ghost sm" onclick="inventaire(${s.id})">Compter</button> <button class="btn line sm" onclick="editStock(${s.id})">Modifier</button></td></tr>`).join('') || '<tr><td colspan="8"><div class="empty">Aucun article.</div></td></tr>'}
+    </tbody></table></div></div>
+    <div class="card" style="margin-top:16px"><div class="card-t">Mouvements de stock récents</div>${D.stockMvts.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Date</th><th>Article</th><th>Type</th><th class="num">Quantité</th><th>Motif</th></tr></thead><tbody>
+      ${D.stockMvts.slice().reverse().slice(0, 40).map(m => `<tr><td>${fdt(m.at)}</td><td>${esc(name(m.stockId))}</td><td><span class="badge ${m.type === 'achat' ? 'vert' : m.type === 'vente' ? '' : 'jaune'}">${{ achat: 'Approvisionnement', vente: 'Consommation', inventaire: 'Inventaire' }[m.type]}</span></td><td class="num ${m.quantite >= 0 ? 'pos' : 'neg'}">${m.quantite > 0 ? '+' : ''}${Math.round(m.quantite * 1000) / 1000}</td><td>${esc(m.motif)}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">Aucun mouvement.</div>'}</div>`;
+}
+function editStock(id) {
+  const s = id ? D.stock.find(x => x.id === id) : { nom: '', unite: 'kg', quantite: 0, seuil: 0, cout: 0 };
+  openModal(`<div class="mt h">${id ? 'Modifier l’article' : 'Nouvel article de stock'}</div>
+    <div class="row"><div class="fld"><label>Nom</label><input id="st-nom" value="${esc(s.nom)}" placeholder="Ex. : Poulet entier"></div><div class="fld" style="max-width:150px"><label>Unité</label><input id="st-u" value="${esc(s.unite)}" list="units"><datalist id="units"><option>kg</option><option>pièce</option><option>litre</option><option>sac</option><option>bouteille</option><option>carton</option><option>portion</option></datalist></div></div>
+    <div class="row">${id ? '' : `<div class="fld"><label>Quantité actuelle</label><input type="number" step="any" id="st-q" value="${s.quantite}"></div>`}<div class="fld"><label>Seuil d’alerte</label><input type="number" step="any" id="st-s" value="${s.seuil}"></div><div class="fld"><label>Coût unitaire (F)</label><input type="number" id="st-c" value="${s.cout}"></div></div>
+    <div class="err" id="st-err"></div>
+    <div class="mfoot">${id ? `<button class="btn ghost" onclick="delStock(${id})">Supprimer</button>` : ''}<button class="btn" onclick="saveStock(${id || 0})">Enregistrer</button></div>`);
+}
+async function saveStock(id) {
+  const body = { nom: $('st-nom').value, unite: $('st-u').value, seuil: $('st-s').value, cout: $('st-c').value };
+  if (!id) body.quantite = $('st-q').value;
+  try { id ? await api('/api/admin/stock/' + id, { method: 'PUT', body }) : await api('/api/admin/stock', { body }); closeModal(); await load(); render(); } catch (e) { $('st-err').textContent = e.message; }
+}
+async function delStock(id) {
+  const code = await askDeleteCode('Supprimer cet article de stock (il sera retiré des recettes).'); if (!code) return;
+  try { await api(`/api/admin/stock/${id}/delete`, { body: { code } }); await load(); render(); } catch (e) { toast('Suppression refusée', e.message, true); }
+}
+function appro(id) {
+  const s = D.stock.find(x => x.id === id);
+  openModal(`<div class="mt h">Approvisionner — ${esc(s.nom)}</div><p class="hint">Stock actuel : ${s.quantite} ${esc(s.unite)}</p>
+    <div class="row" style="margin-top:12px"><div class="fld"><label>Quantité achetée (${esc(s.unite)})</label><input type="number" step="any" id="ap-q" oninput="$('ap-t').value=Math.round((Number(this.value)||0)*${s.cout || 0})"></div><div class="fld"><label>Coût total (F)</label><input type="number" id="ap-t"></div></div>
+    <div class="fld"><label>Fournisseur / lieu</label><input id="ap-f" placeholder="Ex. : Marché de Cocody"></div>
+    <div class="row"><label style="display:flex;gap:8px;align-items:center;font-weight:700;flex:1"><input type="checkbox" id="ap-c" checked> Payé depuis la caisse (crée une sortie)</label>
+    <div class="fld"><select id="ap-p"><option value="especes">Espèces</option><option value="mobile_money">Mobile money</option><option value="banque">Banque</option></select></div></div>
+    <div class="err" id="ap-err"></div><div class="mfoot"><button class="btn big vert" onclick="saveAppro(${id})">Valider l’achat</button></div>`);
+  setTimeout(() => $('ap-q').focus(), 50);
+}
+async function saveAppro(id) {
+  try { const r = await api(`/api/admin/stock/${id}/entree`, { body: { quantite: $('ap-q').value, coutTotal: $('ap-t').value, fournisseur: $('ap-f').value, payeCaisse: $('ap-c').checked, paiement: $('ap-p').value } });
+    closeModal(); await load(); render(); toast('Stock mis à jour', r.mouvement ? `Sortie de caisse : ${F(r.mouvement.montant)}` : ''); } catch (e) { $('ap-err').textContent = e.message; }
+}
+function inventaire(id) {
+  const s = D.stock.find(x => x.id === id);
+  openModal(`<div class="mt h">Inventaire — ${esc(s.nom)}</div><p class="hint">Le logiciel calcule : <b>${s.quantite} ${esc(s.unite)}</b>. Saisissez ce que vous comptez réellement ; l’écart (perte, casse, erreur) est enregistré.</p>
+    <div class="row" style="margin-top:12px"><div class="fld"><label>Quantité comptée</label><input type="number" step="any" id="iv-q" value="${s.quantite}"></div><div class="fld"><label>Motif</label><select id="iv-m"><option>Inventaire</option><option>Perte / avarie</option><option>Casse</option><option>Repas du personnel</option><option>Correction</option></select></div></div>
+    <div class="err" id="iv-err"></div><div class="mfoot"><button class="btn big" onclick="saveInv(${id})">Valider</button></div>`);
+}
+async function saveInv(id) {
+  try { const r = await api(`/api/admin/stock/${id}/inventaire`, { body: { quantite: $('iv-q').value, motif: $('iv-m').value } }); closeModal(); await load(); render(); toast('Inventaire enregistré', r.ecart ? `Écart : ${r.ecart > 0 ? '+' : ''}${r.ecart}` : 'Aucun écart'); } catch (e) { $('iv-err').textContent = e.message; }
+}
+
+// ===================================================================
+// RAPPORTS
+// ===================================================================
+let RM = '';
+function rRapports() {
+  if (!RM) RM = todayStr().slice(0, 7);
+  const [y, mo] = RM.split('-').map(Number);
+  const mv = mvMonth(RM);
+  const cmds = D.commandes.filter(c => c.statut === 'terminee' && (c.date || c.at.slice(0, 10)).startsWith(RM));
+  const plats = {}; cmds.forEach(c => c.lignes.forEach(l => { const p = plats[l.nom] = plats[l.nom] || { q: 0, t: 0 }; p.q += l.qte; p.t += l.total; }));
+  const top = Object.entries(plats).sort((a, b) => b[1].t - a[1].t); const tMax = Math.max(1, ...top.map(x => x[1].t));
+  const byMode = {}, byPay = {}; cmds.forEach(c => { byMode[c.mode] = (byMode[c.mode] || 0) + c.total; byPay[c.paiement] = (byPay[c.paiement] || 0) + c.total; });
+  const inCat = {}, outCat = {}; mv.forEach(m => { const o = m.type === 'entree' ? inCat : outCat; o[m.categorie] = (o[m.categorie] || 0) + m.montant; });
+  const nd = new Date(y, mo, 0).getDate();
+  const daysRows = Array.from({ length: nd }, (_, i) => { const d = `${RM}-${String(i + 1).padStart(2, '0')}`; const x = mvDay(d); return { d, e: IN(x), s: OUT(x), n: cmds.filter(c => (c.date || c.at.slice(0, 10)) === d).length }; }).filter(r => r.e || r.s);
+  // Année
+  const year = Array.from({ length: 12 }, (_, i) => { const k = `${y}-${String(i + 1).padStart(2, '0')}`; const x = mvMonth(k); return { k, e: IN(x), s: OUT(x) }; });
+  const MODE = { livraison: 'Livraison', sur_place: 'Sur place', emporter: 'À emporter' };
+  const res = IN(mv) - OUT(mv);
+  $('p-rapports').innerHTML = `<div class="ph-t"><div><div class="h">Rapport de ${MOIS[mo - 1]} ${y}</div><p>Calculé automatiquement à partir des commandes et de la caisse.</p></div>
+      <div class="row noprint"><input type="month" value="${RM}" onchange="RM=this.value;rRapports()" style="padding:10px 12px;border-radius:12px;border:1.5px solid var(--gris2)"><button class="btn ghost" onclick="window.print()">Imprimer</button></div></div>
+    <div class="kpis"><div class="kpi vert"><div class="l">Entrées</div><div class="v">${F(IN(mv))}</div></div><div class="kpi rouge"><div class="l">Sorties</div><div class="v">${F(OUT(mv))}</div></div>
+      <div class="kpi"><div class="l">Résultat</div><div class="v ${res >= 0 ? 'pos' : 'neg'}">${res < 0 ? '− ' : ''}${F(Math.abs(res))}</div><div class="s">marge ${IN(mv) ? Math.round(res / IN(mv) * 100) : 0} %</div></div>
+      <div class="kpi jaune"><div class="l">Commandes servies</div><div class="v">${cmds.length}</div><div class="s">panier moyen ${F(cmds.length ? sum(cmds, c => c.total) / cmds.length : 0)}</div></div></div>
+    <div class="grid2" style="align-items:start">
+      <div class="card"><div class="card-t">Plats les plus vendus</div>${top.length ? top.slice(0, 15).map(([k, v]) => `<div class="hbar e"><span>${esc(k)} <small style="color:var(--gris4)">× ${v.q}</small></span><div class="tr"><i style="width:${v.t / tMax * 100}%"></i></div><b>${F(v.t)}</b></div>`).join('') : '<div class="empty">Aucune vente ce mois-ci.</div>'}</div>
+      <div><div class="card"><div class="card-t">Ventes par mode</div>${Object.entries(byMode).map(([k, v]) => `<div class="hbar e"><span>${MODE[k] || k}</span><div class="tr"><i style="width:${v / Math.max(...Object.values(byMode)) * 100}%"></i></div><b>${F(v)}</b></div>`).join('') || '<div class="empty">—</div>'}
+        <div class="card-t" style="margin-top:14px">Par moyen de paiement</div>${Object.entries(byPay).map(([k, v]) => `<div class="hbar e"><span>${PAY_LABEL[k] || k}</span><div class="tr"><i style="width:${v / Math.max(...Object.values(byPay)) * 100}%"></i></div><b>${F(v)}</b></div>`).join('') || '<div class="empty">—</div>'}</div>
+      <div class="card" style="margin-top:16px"><div class="card-t">Entrées / sorties par catégorie</div>
+        ${Object.entries(inCat).map(([k, v]) => `<div class="hbar e"><span>${esc(k)}</span><div class="tr" style="background:none"></div><b class="pos">+ ${F(v)}</b></div>`).join('')}
+        ${Object.entries(outCat).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<div class="hbar"><span>${esc(k)}</span><div class="tr" style="background:none"></div><b class="neg">− ${F(v)}</b></div>`).join('')}</div></div>
+    </div>
+    <div class="grid2" style="margin-top:16px;align-items:start">
+      <div class="card"><div class="card-t">Jour par jour</div>${daysRows.length ? `<table class="tbl"><thead><tr><th>Jour</th><th class="num">Commandes</th><th class="num">Entrées</th><th class="num">Sorties</th><th class="num">Solde</th></tr></thead><tbody>${daysRows.map(r => `<tr><td>${dmy(r.d)}</td><td class="num">${r.n}</td><td class="num pos">${F(r.e)}</td><td class="num neg">${F(r.s)}</td><td class="num"><b>${F(r.e - r.s)}</b></td></tr>`).join('')}</tbody></table>` : '<div class="empty">Aucune opération.</div>'}</div>
+      <div class="card"><div class="card-t">Année ${y}</div><table class="tbl"><thead><tr><th>Mois</th><th class="num">Entrées</th><th class="num">Sorties</th><th class="num">Résultat</th></tr></thead><tbody>${year.map((r, i) => `<tr><td>${MOIS[i]}</td><td class="num pos">${r.e ? F(r.e) : ''}</td><td class="num neg">${r.s ? F(r.s) : ''}</td><td class="num"><b class="${r.e - r.s >= 0 ? '' : 'neg'}">${r.e || r.s ? F(r.e - r.s) : ''}</b></td></tr>`).join('')}
+        <tr class="foot"><td>Total</td><td class="num">${F(sum(year, r => r.e))}</td><td class="num">${F(sum(year, r => r.s))}</td><td class="num">${F(sum(year, r => r.e - r.s))}</td></tr></tbody></table></div>
+    </div>`;
+}
+</script>
+</body>
+</html>

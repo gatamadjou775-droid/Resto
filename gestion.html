@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0B3D2C">
+<link rel="icon" href="/icon.svg">
+<title>Gestion du restaurant</title>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<link rel="stylesheet" href="/admin.css">
+<style>
+/* ----- Commandes (colonnes) ----- */
+.board{display:grid;grid-template-columns:repeat(4,minmax(250px,1fr));gap:14px;overflow-x:auto;padding-bottom:6px;}
+.col{background:#EAE6E0;border-radius:22px;padding:12px;min-height:300px;}
+.col-h{display:flex;justify-content:space-between;align-items:center;padding:4px 6px 12px;}
+.col-h .h{font-size:22px;}
+.col-h .n{background:#fff;border-radius:999px;padding:3px 11px;font-weight:800;font-size:13px;}
+.col.c1 .col-h .n{background:var(--rouge);color:#fff;}
+.oc{background:#fff;border-radius:18px;padding:14px;margin-bottom:10px;box-shadow:0 2px 0 var(--gris2);}
+.oc.new{box-shadow:0 0 0 3px var(--rouge);animation:blink 1.4s ease-in-out infinite;}
+@keyframes blink{50%{box-shadow:0 0 0 3px rgba(225,6,0,.25);}}
+.oc-h{display:flex;align-items:center;gap:8px;justify-content:space-between;}
+.oc-h .h{font-size:24px;}
+.oc .age{font-size:12px;color:var(--gris4);font-weight:600;}
+.oc .who{margin-top:6px;font-size:13.5px;}
+.oc .who a{font-weight:700;text-decoration:none;}
+.oc .where{font-size:13px;color:var(--gris4);margin-top:3px;line-height:1.35;}
+.oc ul{list-style:none;margin:10px 0;border-top:1px dashed var(--gris2);padding-top:8px;}
+.oc li{padding:3px 0;font-size:14px;}
+.oc li b{font-weight:800;}
+.oc li small{display:block;color:var(--gris4);font-size:12.5px;padding-left:22px;}
+.oc li em{display:block;color:var(--rouge2);font-size:12.5px;padding-left:22px;font-style:normal;font-weight:600;}
+.oc .onote{background:var(--jaunep);border-radius:10px;padding:7px 10px;font-size:13px;margin-bottom:8px;}
+.oc-f{display:flex;justify-content:space-between;align-items:center;font-weight:800;}
+.oc-a{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+.oc-a .btn{flex:1;}
+.col-empty{text-align:center;color:var(--gris4);font-size:13px;padding:30px 10px;}
+.soundbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+
+/* ----- Menu ----- */
+.catrow{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--gris);}
+.catrow:last-child{border-bottom:none;}
+.menu-grid{grid-template-columns:420px 1fr;}
+.menu-grid>*{min-width:0;}
+@media(max-width:1250px){.menu-grid{grid-template-columns:1fr;}}
+.catrow .cn{flex:1;font-weight:700;min-width:0;}
+.catrow .cn small{display:block;font-weight:500;color:var(--gris4);}
+.pl-name b{display:block;}
+.pl-name small{display:block;color:var(--gris4);max-width:340px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.off td{opacity:.55;}
+.off td:nth-child(4),.off td:nth-child(5){opacity:1;}
+.og{background:#fff;border:1.5px solid var(--gris2);border-radius:16px;padding:12px;margin-bottom:10px;}
+.og .row{align-items:center;}
+.chx{display:flex;gap:8px;align-items:center;margin-top:6px;}
+.chx input{padding:8px 10px;border-radius:10px;border:1.5px solid var(--gris2);outline:none;}
+.chx input:first-child{flex:1;}
+.chx input:nth-child(2){width:110px;}
+.xbtn{width:30px;height:30px;border-radius:50%;background:var(--gris);font-weight:700;flex-shrink:0;}
+
+/* ----- Bannières ----- */
+.bans{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;}
+.ban{height:160px;border-radius:20px;position:relative;overflow:hidden;color:#fff;background:var(--vert2);display:flex;align-items:flex-end;}
+.ban.rouge{background:var(--rouge);}
+.ban.jaune{background:var(--jaune);color:var(--noir);}
+.ban img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.ban.has-img::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(11,61,44,.92) 0%,rgba(11,61,44,.55) 48%,rgba(0,0,0,0) 78%);}
+.ban .d1{position:absolute;right:-40px;top:-50px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.1);}
+.ban .d2{position:absolute;right:-24px;bottom:-70px;width:140px;height:140px;border-radius:50%;border:20px solid var(--rouge);}
+.ban.rouge .d2{border-color:var(--jaune);}
+.ban.jaune .d2{border-color:var(--rouge);}
+.ban .bt{position:relative;z-index:2;padding:16px;max-width:74%;}
+.ban .bt .h{font-size:25px;margin-bottom:5px;}
+.ban .bt p{font-size:13px;line-height:1.3;}
+.ban-c{background:#fff;border-radius:22px;padding:10px;}
+.ban-c.off .ban{opacity:.45;filter:grayscale(.6);}
+.ban-a{display:flex;align-items:center;gap:8px;padding:10px 4px 2px;flex-wrap:wrap;}
+.colpick{display:flex;gap:8px;}
+.colpick button{width:44px;height:44px;border-radius:50%;border:3px solid transparent;}
+.colpick button.on{border-color:var(--noir);}
+
+/* ----- Messages ----- */
+.days{display:flex;gap:5px;flex-wrap:wrap;}
+.days button{width:36px;height:36px;border-radius:50%;background:var(--gris);font-weight:800;font-size:13px;}
+.days button.on{background:var(--vert);color:#fff;}
+.prog{display:flex;gap:14px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--gris);flex-wrap:wrap;}
+.prog:last-child{border-bottom:none;}
+.prog .hr{font-family:var(--fh);font-weight:800;font-size:34px;min-width:90px;}
+.prog .tx{flex:1;min-width:220px;}
+.prog .tx b{display:block;}
+.prog .tx p{color:var(--gris4);font-size:13.5px;margin-top:2px;}
+.ins{display:flex;gap:6px;flex-wrap:wrap;margin:-4px 0 12px;}
+.ins button{padding:5px 10px;border-radius:8px;background:var(--jaunep);font-size:12px;font-weight:700;}
+
+/* ----- Discussions ----- */
+.chatw{display:grid;grid-template-columns:300px 1fr;gap:14px;height:calc(100vh - 240px);min-height:420px;}
+@media(max-width:800px){.chatw{grid-template-columns:1fr;height:auto;}}
+.convs{background:#fff;border-radius:20px;overflow-y:auto;}
+.conv{padding:14px 16px;border-bottom:1px solid var(--gris);cursor:pointer;display:flex;gap:10px;align-items:center;}
+.conv:hover{background:#FCFBF9;}
+.conv.on{background:var(--vertp);}
+.conv .av{width:40px;height:40px;border-radius:50%;background:var(--vert);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0;}
+.conv .ci{flex:1;min-width:0;}
+.conv .ci b{display:block;}
+.conv .ci small{display:block;color:var(--gris4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.thread{background:#fff;border-radius:20px;display:flex;flex-direction:column;overflow:hidden;min-height:420px;}
+.thread-h{padding:14px 18px;border-bottom:1px solid var(--gris);font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px;background:var(--creme);}
+.msg{max-width:75%;padding:9px 13px;border-radius:16px;font-size:14px;line-height:1.35;word-wrap:break-word;}
+.msg.cl{align-self:flex-start;background:#fff;box-shadow:0 1px 0 var(--gris2);border-bottom-left-radius:5px;}
+.msg.re{align-self:flex-end;background:var(--vert);color:#fff;border-bottom-right-radius:5px;}
+.msg time{display:block;font-size:11px;opacity:.6;margin-top:2px;}
+.thread-f{display:flex;gap:8px;padding:12px;border-top:1px solid var(--gris);}
+.thread-f input{flex:1;padding:12px 16px;border-radius:999px;border:1.5px solid var(--gris2);outline:none;}
+
+/* ----- Tables QR ----- */
+.qrs{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;}
+.qr{background:#fff;border-radius:22px;padding:16px;text-align:center;border:2px solid var(--vert);break-inside:avoid;position:relative;overflow:hidden;}
+.qr::before{content:'';position:absolute;left:-30px;top:-30px;width:90px;height:90px;border-radius:50%;background:var(--rouge);}
+.qr .h{font-size:34px;position:relative;}
+.qr svg{width:150px;height:150px;margin:8px auto;display:block;}
+.qr p{font-size:13px;font-weight:600;}
+.qr small{display:block;color:var(--gris4);font-size:11.5px;margin-top:3px;}
+@media print{body.print-qr .panel:not(#p-tables){display:none !important;}body.print-qr .qr-tools{display:none;}.qrs{grid-template-columns:repeat(3,1fr);}}
+
+.resa-tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+.devis{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px;}
+.dv .k{display:flex;justify-content:space-between;padding:4px 0;font-size:13.5px;border-bottom:1px solid var(--gris);}
+.dv .k span{color:var(--gris4);}
+.dv .desc{background:var(--gris);border-radius:12px;padding:10px;font-size:13.5px;margin:10px 0;white-space:pre-wrap;}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="logo"></div>
+  <div class="brand"><div class="h" id="g-nom">Gestion</div><small>Espace de la responsable · <span class="live" id="live"><i></i><span>connexion…</span></span></small></div>
+  <div class="tb-r">
+    <button class="openbtn on" id="g-open" onclick="toggleOpen()"><i></i><span>Ouvert</span></button>
+    <a class="tb-btn red" href="/caisse.html">Caisse</a>
+    <a class="tb-btn" href="/" target="_blank">App client</a>
+    <button class="tb-btn" onclick="logout()">Déconnexion</button>
+  </div>
+</header>
+<nav class="nav" id="nav">
+  <button class="nb on" data-p="commandes">Commandes <span class="cnt" id="n-cmd"></span></button>
+  <button class="nb" data-p="menu">Menus & plats</button>
+  <button class="nb" data-p="bannieres">Bannières</button>
+  <button class="nb" data-p="messages">Messages clients</button>
+  <button class="nb" data-p="reservations">Réservations <span class="cnt" id="n-resa"></span></button>
+  <button class="nb" data-p="devis">Devis événements <span class="cnt" id="n-devis"></span></button>
+  <button class="nb" data-p="discussions">Discussions <span class="cnt" id="n-chat"></span></button>
+  <button class="nb" data-p="clients">Clients</button>
+  <button class="nb" data-p="tables">Tables & QR codes</button>
+  <button class="nb" data-p="reglages">Réglages</button>
+</nav>
+<main class="content">
+  <section class="panel on" id="p-commandes"></section>
+  <section class="panel" id="p-menu"></section>
+  <section class="panel" id="p-bannieres"></section>
+  <section class="panel" id="p-messages"></section>
+  <section class="panel" id="p-reservations"></section>
+  <section class="panel" id="p-devis"></section>
+  <section class="panel" id="p-discussions"></section>
+  <section class="panel" id="p-clients"></section>
+  <section class="panel" id="p-tables"></section>
+  <section class="panel" id="p-reglages"></section>
+</main>
+
+<script src="/vendor/qrcode.js"></script>
+<script src="/admin-commun.js"></script>
+<script>
+let G = null;           // toutes les données
+let P = 'commandes';    // panneau affiché
+let soundOn = true, audioCtx = null;
+const ST = { recue: 'Nouvelle', acceptee: 'Acceptée', preparation: 'En cuisine', prete: 'Prête', en_livraison: 'En livraison', terminee: 'Terminée', annulee: 'Annulée' };
+const MODE = { livraison: 'Livraison', sur_place: 'Sur place', emporter: 'À emporter' };
+const JOURS = [[1, 'L'], [2, 'M'], [3, 'M'], [4, 'J'], [5, 'V'], [6, 'S'], [0, 'D']];
+const byId = (arr, id) => arr.find(x => x.id === Number(id));
+const upsert = (arr, o) => { const i = arr.findIndex(x => x.id === o.id); if (i >= 0) arr[i] = o; else arr.push(o); };
+
+// ===================================================================
+// DÉMARRAGE
+// ===================================================================
+document.querySelectorAll('#nav .nb').forEach(b => b.onclick = () => showPanel(b.dataset.p));
+function showPanel(p) {
+  P = p;
+  document.querySelectorAll('#nav .nb').forEach(b => b.classList.toggle('on', b.dataset.p === p));
+  document.querySelectorAll('.panel').forEach(x => x.classList.toggle('on', x.id === 'p-' + p));
+  render();
+  try { localStorage.setItem('g_panel', p); } catch (e) { }
+}
+async function load() {
+  G = await api('/api/admin/bootstrap');
+  $('g-nom').textContent = G.settings.resto.nom;
+  document.title = 'Gestion — ' + G.settings.resto.nom;
+  renderOpen();
+}
+adminBoot(async () => {
+  await load();
+  let p = 'commandes'; try { p = localStorage.getItem('g_panel') || p; } catch (e) { }
+  showPanel(p);
+  adminStream({
+    commande: c => { upsert(G.commandes, c); if (P === 'commandes') render(); badges(); },
+    nouvelle: n => { alertNew(n); },
+    client: c => { upsert(G.clients, c); },
+    chat: m => { const c = Object.assign({}, m); delete c.clientNom; delete c.clientTel; upsert(G.chats, c);
+      if (!G.clients.some(x => x.id === m.clientId)) G.clients.push({ id: m.clientId, nom: m.clientNom, tel: m.clientTel });
+      if (m.de === 'client') { ding(1); if (P !== 'discussions' || CUR_CHAT !== m.clientId) toast('Message de ' + m.clientNom, m.texte); }
+      if (P === 'discussions') { renderDiscussions(true); } badges(); },
+    reservation: r => { const isNew = !G.reservations.some(x => x.id === r.id); upsert(G.reservations, r); if (isNew) { ding(1); toast('Nouvelle réservation', `${r.nom} · ${dmy(r.date)} ${r.heure} · ${r.personnes} pers.`); } if (P === 'reservations') render(); badges(); },
+    devis: d => { const isNew = !G.devis.some(x => x.id === d.id); const old = G.devis.find(x => x.id === d.id); upsert(G.devis, d);
+      if (isNew) { ding(1); toast('Nouvelle demande de devis', `${d.nom} · ${d.evenement} · ${d.invites} invités`); }
+      else if (old && old.statut !== d.statut && (d.statut === 'accepte' || d.statut === 'refuse')) toast('Devis ' + (d.statut === 'accepte' ? 'accepté' : 'refusé') + ' par le client', d.nom + ' · ' + d.evenement);
+      if (P === 'devis') render(); badges(); },
+    mouvement: () => { },
+    alerte: a => toast(a.titre, a.corps, true),
+    position: d => { const c = byId(G.commandes, d.id); if (c) c.livreurPos = d.pos; }
+  }, on => { $('live').classList.toggle('on', on); $('live').querySelector('span').textContent = on ? 'en direct' : 'reconnexion…'; if (on && G) load().then(() => render()); });
+  setInterval(() => { document.querySelectorAll('[data-age]').forEach(el => el.textContent = ago(el.dataset.age)); }, 30000);
+  setInterval(() => { if (soundOn && G.commandes.some(c => c.statut === 'recue')) ding(2); }, 20000);
+});
+function render() {
+  if (!G) return;
+  ({ commandes: renderCommandes, menu: renderMenu, bannieres: renderBanners, messages: renderMessages, reservations: renderResas, devis: renderDevis,
+    discussions: renderDiscussions, clients: renderClients, tables: renderTables, reglages: renderReglages })[P]();
+  badges();
+}
+function badges() {
+  const nc = G.commandes.filter(c => c.statut === 'recue').length;
+  $('n-cmd').textContent = nc || '';
+  $('n-resa').textContent = G.reservations.filter(r => r.statut === 'demandee').length || '';
+  $('n-devis').textContent = G.devis.filter(d => d.statut === 'nouveau').length || '';
+  $('n-chat').textContent = G.chats.filter(m => m.de === 'client' && !m.lu).length || '';
+  document.title = (nc ? `(${nc}) ` : '') + 'Gestion — ' + G.settings.resto.nom;
+}
+
+// Sons et alertes
+function ding(kind) {
+  if (!soundOn) return;
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const notes = kind === 2 ? [880, 1175, 880, 1175] : [784, 1046];
+    notes.forEach((f, i) => { const o = audioCtx.createOscillator(), g = audioCtx.createGain(); const t = audioCtx.currentTime + i * .17; o.type = 'triangle'; o.frequency.value = f; g.gain.setValueAtTime(.25, t); g.gain.exponentialRampToValueAtTime(.001, t + .3); o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t + .32); });
+  } catch (e) { }
+}
+document.addEventListener('click', () => { if (!audioCtx) try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { } }, { once: true });
+function alertNew(n) {
+  ding(2);
+  toast(`Nouvelle commande n° ${n.numero}`, `${n.client} · ${MODE[n.mode]}${n.table ? ' table ' + n.table : ''} · ${F(n.total)}`);
+  if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
+    try { new Notification(`Nouvelle commande n° ${n.numero}`, { body: `${n.client} · ${F(n.total)}`, icon: '/icon.svg' }); } catch (e) { }
+  }
+}
+function ago(iso) {
+  const m = Math.floor((Date.now() - new Date(iso)) / 60000);
+  return m < 1 ? 'à l’instant' : m < 60 ? `il y a ${m} min` : `il y a ${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')}`;
+}
+
+// Ouvert / fermé (visible côté client immédiatement)
+function renderOpen() {
+  const o = G.settings.resto.ouvert, b = $('g-open');
+  b.className = 'openbtn ' + (o ? 'on' : 'off'); b.querySelector('span').textContent = o ? 'Ouvert — prend les commandes' : 'Fermé';
+}
+async function toggleOpen() {
+  const o = !G.settings.resto.ouvert;
+  if (!o && !confirm('Fermer le restaurant ? Les clients ne pourront plus commander.')) return;
+  try { const r = await api('/api/admin/resto', { method: 'PUT', body: { ouvert: o } }); G.settings.resto = r.resto; renderOpen(); toast(o ? 'Restaurant ouvert' : 'Restaurant fermé', o ? 'Les clients peuvent commander.' : 'L’app affiche « Actuellement fermé ».'); }
+  catch (e) { toast('Erreur', e.message, true); }
+}
+
+// ===================================================================
+// COMMANDES
+// ===================================================================
+function renderCommandes() {
+  const td = todayStr();
+  const today = G.commandes.filter(c => c.date === td || new Date(c.at).toDateString() === new Date().toDateString());
+  const done = today.filter(c => c.statut === 'terminee');
+  const ca = done.reduce((s, c) => s + c.total, 0);
+  const cols = [
+    ['c1', 'Nouvelles', c => c.statut === 'recue'],
+    ['c2', 'En cuisine', c => c.statut === 'acceptee' || c.statut === 'preparation'],
+    ['c3', 'Prêtes', c => c.statut === 'prete'],
+    ['c4', 'En livraison', c => c.statut === 'en_livraison']
+  ];
+  const active = G.commandes.filter(c => !['terminee', 'annulee'].includes(c.statut));
+  $('p-commandes').innerHTML = `
+    <div class="ph-t"><div><div class="h">Commandes en direct</div><p>Les commandes de l’app et des tables arrivent ici instantanément. Une commande terminée part automatiquement en caisse.</p></div>
+      <div class="soundbar"><button class="btn ${soundOn ? 'vert' : 'ghost'} sm" onclick="soundOn=!soundOn;render();if(soundOn)ding(1)">Son ${soundOn ? 'activé' : 'coupé'}</button>
+      ${'Notification' in window && Notification.permission === 'default' ? '<button class="btn ghost sm" onclick="Notification.requestPermission().then(render)">Alertes bureau</button>' : ''}
+      <button class="btn" onclick="openComptoir()">+ Commande comptoir</button></div></div>
+    <div class="kpis">
+      <div class="kpi vert"><div class="l">Commandes du jour</div><div class="v">${today.filter(c => c.statut !== 'annulee').length}</div><div class="s">${active.length} en cours</div></div>
+      <div class="kpi"><div class="l">Encaissé aujourd’hui</div><div class="v">${F(ca)}</div><div class="s">${done.length} terminée(s)</div></div>
+      <div class="kpi jaune"><div class="l">Panier moyen</div><div class="v">${F(done.length ? ca / done.length : 0)}</div><div class="s">sur les commandes terminées</div></div>
+      <div class="kpi rouge"><div class="l">Annulées</div><div class="v">${today.filter(c => c.statut === 'annulee').length}</div><div class="s">aujourd’hui</div></div>
+    </div>
+    <div class="board">${cols.map(([k, t, f]) => { const list = active.filter(f).sort((a, b) => a.id - b.id); return `<div class="col ${k}"><div class="col-h"><span class="h">${t}</span><span class="n">${list.length}</span></div>${list.length ? list.map(ocard).join('') : '<div class="col-empty">Aucune commande</div>'}</div>`; }).join('')}</div>
+    <div class="card" style="margin-top:18px"><div class="card-t">Terminées et annulées aujourd’hui</div>
+      ${today.filter(c => ['terminee', 'annulee'].includes(c.statut)).length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>N°</th><th>Heure</th><th>Client</th><th>Mode</th><th>Articles</th><th>Paiement</th><th class="num">Total</th><th>Statut</th><th>Avis</th><th></th></tr></thead><tbody>
+      ${today.filter(c => ['terminee', 'annulee'].includes(c.statut)).reverse().map(c => `<tr><td><b>${c.numero}</b></td><td>${fheure(c.at)}</td><td>${esc(c.clientNom)}</td><td>${MODE[c.mode]}${c.table ? ' · T' + c.table : ''}</td>
+        <td style="max-width:280px">${esc(c.lignes.map(l => l.qte + '× ' + l.nom).join(', '))}</td><td>${PAY_LABEL[c.paiement] || c.paiement}</td><td class="num"><b>${F(c.total)}</b></td>
+        <td><span class="badge ${c.statut === 'terminee' ? 'vert' : 'rouge'}">${ST[c.statut]}</span></td><td>${c.avis ? '★ ' + c.avis.note + (c.avis.commentaire ? ' — ' + esc(c.avis.commentaire) : '') : ''}</td>
+        <td><button class="btn ghost sm" onclick="ticket(${c.id})">Ticket</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">Rien pour le moment.</div>'}
+    </div>`;
+}
+function ocard(c) {
+  const where = c.mode === 'livraison' ? `${esc(c.adresse || '')}${c.position ? ` · <a href="https://www.google.com/maps?q=${c.position.lat},${c.position.lng}" target="_blank">Voir sur la carte</a>` : ''}`
+    : c.mode === 'sur_place' ? `<b style="color:var(--noir);font-size:15px">Table ${c.table}</b>` : 'À emporter — récupère au comptoir';
+  const next = {
+    recue: `<button class="btn vert" onclick="statut(${c.id},'acceptee')">Accepter</button><button class="btn ghost" onclick="refuser(${c.id})">Refuser</button>`,
+    acceptee: `<button class="btn vert" onclick="statut(${c.id},'preparation')">Lancer en cuisine</button>`,
+    preparation: `<button class="btn" onclick="statut(${c.id},'prete')">C’est prêt</button>`,
+    prete: c.mode === 'livraison' ? `<button class="btn vert" onclick="statut(${c.id},'en_livraison')">Confier au livreur</button>` : `<button class="btn vert" onclick="statut(${c.id},'terminee')">${c.mode === 'sur_place' ? 'Servie et payée' : 'Remise au client'}</button>`,
+    en_livraison: `<button class="btn ghost" onclick="lienLivreur(${c.id})">Lien livreur</button><button class="btn vert" onclick="statut(${c.id},'terminee')">Livrée et payée</button>`
+  }[c.statut] || '';
+  return `<div class="oc ${c.statut === 'recue' ? 'new' : ''}">
+    <div class="oc-h"><span class="h">N° ${c.numero}</span><span class="badge ${c.mode === 'livraison' ? 'jaune' : c.mode === 'sur_place' ? 'vert' : ''}">${MODE[c.mode]}</span></div>
+    <div class="age" data-age="${c.at}">${ago(c.at)}</div>
+    <div class="who">${esc(c.clientNom)}${c.tel ? ` · <a href="tel:${esc(c.tel)}">${esc(c.tel)}</a>` : ''}${c.source === 'comptoir' ? ' · <span class="badge">Comptoir</span>' : ''}</div>
+    <div class="where">${where}</div>
+    <ul>${c.lignes.map(l => `<li><b>${l.qte} ×</b> ${esc(l.nom)}${l.options.length ? `<small>${esc(l.options.map(o => o.choix).join(' · '))}</small>` : ''}${l.note ? `<em>« ${esc(l.note)} »</em>` : ''}</li>`).join('')}</ul>
+    ${c.note ? `<div class="onote">${esc(c.note)}</div>` : ''}
+    <div class="oc-f"><span>${F(c.total)}</span><span class="badge">${PAY_LABEL[c.paiement] || c.paiement}</span></div>
+    <div class="oc-a">${next}</div>
+    <div class="oc-a"><button class="btn line sm" onclick="ticket(${c.id})">Ticket cuisine</button>${c.statut !== 'recue' ? `<button class="btn line sm" onclick="refuser(${c.id})">Annuler</button>` : ''}</div>
+  </div>`;
+}
+async function statut(id, s) {
+  try {
+    const r = await api(`/api/admin/commandes/${id}/statut`, { body: { statut: s } }); upsert(G.commandes, r.commande); render();
+    if (s === 'en_livraison') lienLivreur(id);
+    if (s === 'terminee') toast('Commande terminée', `N° ${r.commande.numero} enregistrée en caisse : ${F(r.commande.total)}`);
+  } catch (e) { toast('Impossible', e.message, true); }
+}
+function refuser(id) { const c = byId(G.commandes, id); if (confirm(`Annuler la commande n° ${c.numero} ? Le client sera prévenu.`)) statut(id, 'annulee'); }
+function lienLivreur(id) {
+  const c = byId(G.commandes, id);
+  const url = `${location.origin}/livreur.html?c=${c.id}&k=${c.livreurKey}`;
+  const q = qrcode(0, 'M'); q.addData(url); q.make();
+  const msg = `Course n° ${c.numero} — ${c.clientNom}, ${c.adresse || 'position GPS'}. Ouvrez ce lien et partagez votre position : ${url}`;
+  openModal(`<div class="mt h">Lien du livreur</div>
+    <p class="hint">Le livreur ouvre ce lien sur son téléphone et appuie sur « Démarrer ». Le client voit alors sa position en direct sur la carte.</p>
+    <div style="text-align:center;margin:14px 0">${q.createSvgTag({ cellSize: 5, margin: 2, scalable: true }).replace('<svg ', '<svg style="width:210px;height:210px" ')}</div>
+    <div class="fld"><input value="${esc(url)}" readonly onclick="this.select()"></div>
+    <div class="mfoot"><button class="btn ghost" onclick="navigator.clipboard.writeText('${esc(url)}').then(()=>toast('Lien copié',''))">Copier le lien</button>
+    <a class="btn vert" target="_blank" href="https://wa.me/?text=${encodeURIComponent(msg)}" style="text-decoration:none">Envoyer par WhatsApp</a></div>`);
+}
+function ticket(id) {
+  const c = byId(G.commandes, id), r = G.settings.resto;
+  const w = window.open('', '_blank', 'width=380,height=640');
+  w.document.write(`<html><head><title>Ticket ${c.numero}</title><style>body{font-family:monospace;width:72mm;margin:0 auto;padding:8px;font-size:13px}h1{font-size:18px;text-align:center;margin:4px 0}hr{border:none;border-top:1px dashed #000}.r{display:flex;justify-content:space-between}small{display:block;padding-left:14px}.big{font-size:22px;font-weight:bold;text-align:center}</style></head><body>
+    <h1>${esc(r.nom)}</h1><div class="big">N° ${c.numero}</div><div style="text-align:center">${MODE[c.mode]}${c.table ? ' — TABLE ' + c.table : ''}<br>${fdt(c.at)}</div><hr>
+    <div>${esc(c.clientNom)} ${esc(c.tel || '')}</div>${c.adresse ? `<div>${esc(c.adresse)}</div>` : ''}<hr>
+    ${c.lignes.map(l => `<div class="r"><span>${l.qte} x ${esc(l.nom)}</span><span>${F(l.total)}</span></div>${l.options.map(o => `<small>- ${esc(o.choix)}</small>`).join('')}${l.note ? `<small>* ${esc(l.note)}</small>` : ''}`).join('')}
+    <hr>${c.frais ? `<div class="r"><span>Livraison</span><span>${F(c.frais)}</span></div>` : ''}${c.remise ? `<div class="r"><span>Fidélité</span><span>-${F(c.remise)}</span></div>` : ''}
+    <div class="r" style="font-weight:bold;font-size:16px"><span>TOTAL</span><span>${F(c.total)}</span></div><div>Paiement : ${PAY_LABEL[c.paiement] || ''}</div>${c.note ? `<hr><div>Note : ${esc(c.note)}</div>` : ''}<hr><div style="text-align:center">Merci et bon appétit !</div>
+    <script>window.onload=()=>{window.print();}<\/script></body></html>`);
+  w.document.close();
+}
+// Commande saisie au comptoir / au téléphone
+let CPT = [];
+function openComptoir() { CPT = []; drawComptoir(); }
+function drawComptoir() {
+  const plats = G.plats.filter(p => p.actif);
+  const tot = CPT.reduce((s, l) => s + lineUnit(l) * l.qte, 0);
+  openModal(`<div class="mt h">Commande comptoir</div>
+    <div class="grid2"><div style="max-height:52vh;overflow:auto">${G.categories.map(cat => { const ps = plats.filter(p => p.categorieId === cat.id); return ps.length ? `<div style="font-weight:800;margin:8px 0 4px">${esc(cat.nom)}</div>` + ps.map(p => `<button class="btn line sm" style="margin:0 4px 4px 0" onclick="cptAdd(${p.id})">${esc(p.nom)} · ${F(p.prix)}</button>`).join('') : ''; }).join('')}</div>
+    <div><div style="font-weight:800;margin:8px 0">Commande</div>${CPT.length ? CPT.map((l, i) => { const p = byId(G.plats, l.platId); return `<div class="og"><div class="row" style="justify-content:space-between"><b>${esc(p.nom)}</b><span><button class="xbtn" onclick="CPT[${i}].qte=Math.max(1,CPT[${i}].qte-1);drawComptoir()">−</button> <b>${l.qte}</b> <button class="xbtn" onclick="CPT[${i}].qte++;drawComptoir()">+</button> <button class="xbtn" onclick="CPT.splice(${i},1);drawComptoir()">×</button></span></div>
+      ${(p.options || []).filter(g => g.type === 'single').map(g => `<div class="chx"><small style="width:110px">${esc(g.nom)}</small><select onchange="CPT[${i}].options['${g.id}']=this.value?[this.value]:[];drawComptoir()" style="flex:1;padding:6px;border-radius:8px;border:1.5px solid var(--gris2)">${g.requis ? '' : '<option value="">—</option>'}${g.choix.map(ch => `<option value="${ch.id}" ${(l.options[g.id] || [])[0] === ch.id ? 'selected' : ''}>${esc(ch.nom)}${ch.prix ? ' +' + F(ch.prix) : ''}</option>`).join('')}</select></div>`).join('')}</div>`; }).join('') : '<div class="hint">Cliquez sur les plats à gauche.</div>'}
+      <div class="row"><div class="fld"><label>Mode</label><select id="cp-mode"><option value="sur_place">Sur place</option><option value="emporter">À emporter</option><option value="livraison">Livraison</option></select></div><div class="fld"><label>Table</label><input id="cp-table" type="number" min="0"></div></div>
+      <div class="row"><div class="fld"><label>Client</label><input id="cp-nom" placeholder="Nom (facultatif)"></div><div class="fld"><label>Téléphone</label><input id="cp-tel"></div></div>
+      <div class="fld"><label>Paiement</label><select id="cp-pay">${Object.entries(PAY_LABEL).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></div>
+      <div class="err" id="cp-err"></div>
+      <button class="btn big full" onclick="cptSend()">Envoyer en cuisine · ${F(tot)}</button></div></div>`, true);
+}
+function lineUnit(l) { const p = byId(G.plats, l.platId); let u = p.prix; (p.options || []).forEach(g => (l.options[g.id] || []).forEach(cid => { const c = g.choix.find(x => x.id === cid); if (c) u += c.prix; })); return u; }
+function cptAdd(id) { const p = byId(G.plats, id); const o = {}; (p.options || []).forEach(g => { o[g.id] = g.type === 'single' && g.requis ? [g.choix[0].id] : []; }); CPT.push({ platId: id, qte: 1, options: o }); drawComptoir(); }
+async function cptSend() {
+  try {
+    const r = await api('/api/admin/commandes', { body: { items: CPT, mode: $('cp-mode').value, table: $('cp-table').value, clientNom: $('cp-nom').value, tel: $('cp-tel').value, paiement: $('cp-pay').value, adresse: '' } });
+    upsert(G.commandes, r.commande); closeModal(); render(); toast('Commande envoyée en cuisine', 'N° ' + r.commande.numero);
+  } catch (e) { $('cp-err').textContent = e.message; }
+}
+
+// ===================================================================
+// MENUS & PLATS
+// ===================================================================
+let menuQ = '';
+function renderMenu() {
+  const cats = G.categories.slice().sort((a, b) => a.ordre - b.ordre);
+  const q = menuQ.toLowerCase();
+  $('p-menu').innerHTML = `<div class="ph-t"><div><div class="h">Menus & plats</div><p>Activez ou désactivez un plat : il apparaît ou disparaît aussitôt dans l’application des clients.</p></div>
+      <div class="row"><button class="btn ghost" onclick="editCat()">+ Catégorie</button><button class="btn" onclick="editPlat()">+ Nouveau plat</button></div></div>
+    <div class="grid2 menu-grid" style="align-items:start">
+      <div class="card"><div class="card-t">Catégories</div>${cats.map((c, i) => `<div class="catrow">
+        <div class="thumb" style="background:${esc(c.couleur)}">${c.image ? `<img src="${esc(c.image)}">` : '<span class="pl"></span>'}</div>
+        <div class="cn">${esc(c.nom)}<small>${G.plats.filter(p => p.categorieId === c.id).length} plat(s)</small></div>
+        <button class="xbtn" title="Monter" onclick="moveCat(${c.id},-1)" ${i ? '' : 'disabled'}>↑</button>
+        <button class="sw ${c.actif ? 'on' : ''}" title="Visible" onclick="patchCat(${c.id},{actif:${!c.actif}})"></button>
+        <button class="btn ghost sm" onclick="editCat(${c.id})">Modifier</button></div>`).join('')}
+        <p class="hint" style="margin-top:10px">Une catégorie désactivée masque tous ses plats (ex. : « Petit-déjeuner » le soir).</p></div>
+      <div class="card"><div class="card-t"><span>La carte</span><input placeholder="Rechercher un plat" value="${esc(menuQ)}" oninput="menuQ=this.value;renderMenuList()" style="padding:8px 12px;border-radius:999px;border:1.5px solid var(--gris2);font-size:14px;font-family:var(--fb);text-transform:none;font-weight:500;outline:none"></div>
+        <div id="menu-list"></div></div></div>`;
+  renderMenuList();
+}
+function renderMenuList() {
+  const q = menuQ.toLowerCase();
+  const cats = G.categories.slice().sort((a, b) => a.ordre - b.ordre);
+  $('menu-list').innerHTML = `<div class="tbl-wrap"><table class="tbl"><thead><tr><th></th><th>Plat</th><th class="num">Prix</th><th>Disponible</th><th>Plat du jour</th><th>Choix</th><th>Note</th><th></th></tr></thead><tbody>
+    ${cats.map(cat => { const ps = G.plats.filter(p => p.categorieId === cat.id && (!q || p.nom.toLowerCase().includes(q))); return ps.length ? `<tr><td colspan="8" style="background:var(--gris);font-weight:800;text-transform:uppercase;font-size:12px;letter-spacing:.4px">${esc(cat.nom)}${cat.actif ? '' : ' — catégorie masquée'}</td></tr>` + ps.map(p => {
+      const rt = G.ratings[p.id];
+      return `<tr class="${p.actif ? '' : 'off'}"><td><div class="thumb" style="background:${esc(cat.couleur)}">${p.image ? `<img src="${esc(p.image)}">` : '<span class="pl"></span>'}</div></td>
+        <td class="pl-name"><b>${esc(p.nom)}</b><small>${esc(p.description || '')}</small></td><td class="num"><b>${F(p.prix)}</b></td>
+        <td><button class="sw ${p.actif ? 'on' : ''}" onclick="patchPlat(${p.id},{actif:${!p.actif}})"></button></td>
+        <td><button class="sw red ${p.platDuJour ? 'on' : ''}" onclick="patchPlat(${p.id},{platDuJour:${!p.platDuJour}})"></button></td>
+        <td>${(p.options || []).length ? `<span class="badge">${p.options.length} groupe(s)</span>` : ''}</td><td>${rt ? '★ ' + rt.moyenne + ' (' + rt.nombre + ')' : ''}</td>
+        <td><button class="btn ghost sm" onclick="editPlat(${p.id})">Modifier</button></td></tr>`; }).join('') : ''; }).join('')}
+    </tbody></table></div>`;
+}
+async function patchPlat(id, body) { try { const r = await api('/api/admin/plats/' + id, { method: 'PUT', body }); upsert(G.plats, r.plat); renderMenuList(); toast(body.actif !== undefined ? (body.actif ? 'Plat disponible' : 'Plat retiré de l’app') : (body.platDuJour ? 'Ajouté aux plats du jour' : 'Retiré des plats du jour'), r.plat.nom); } catch (e) { toast('Erreur', e.message, true); } }
+async function patchCat(id, body) { try { const r = await api('/api/admin/categories/' + id, { method: 'PUT', body }); upsert(G.categories, r.categorie); renderMenu(); } catch (e) { toast('Erreur', e.message, true); } }
+async function moveCat(id, d) {
+  const cats = G.categories.slice().sort((a, b) => a.ordre - b.ordre); const i = cats.findIndex(c => c.id === id); const j = i + d; if (j < 0 || j >= cats.length) return;
+  [cats[i], cats[j]] = [cats[j], cats[i]];
+  for (let k = 0; k < cats.length; k++) if (cats[k].ordre !== k + 1) { const r = await api('/api/admin/categories/' + cats[k].id, { method: 'PUT', body: { ordre: k + 1 } }); upsert(G.categories, r.categorie); }
+  renderMenu();
+}
+let EC = null;
+function editCat(id) {
+  const c = id ? byId(G.categories, id) : null;
+  EC = c ? Object.assign({}, c) : { nom: '', couleur: '#E10600', image: '', actif: true };
+  openModal(`<div class="mt h">${c ? 'Modifier la catégorie' : 'Nouvelle catégorie'}</div>
+    <div class="fld"><label>Nom</label><input id="ec-nom" value="${esc(EC.nom)}"></div>
+    <div class="row"><div class="fld" style="max-width:140px"><label>Couleur</label><input id="ec-col" type="color" value="${esc(EC.couleur)}" style="height:46px;padding:4px"></div>
+    <div class="fld"><label>Image (facultatif)</label><div class="imgpick"><div class="prev" id="ec-prev" style="${EC.image ? `background-image:url('${esc(EC.image)}')` : ''}"></div><input type="file" accept="image/*" onchange="pickImg(this,'ec-prev',u=>EC.image=u,700)"></div></div></div>
+    <div class="err" id="ec-err"></div>
+    <div class="mfoot">${c ? `<button class="btn ghost" onclick="delCat(${c.id})">Supprimer</button>` : ''}<button class="btn" onclick="saveCat(${c ? c.id : 0})">Enregistrer</button></div>`);
+}
+async function pickImg(input, prevId, set, max) {
+  const f = input.files[0]; if (!f) return;
+  const pv = $(prevId); pv.style.opacity = .4;
+  try { const url = await uploadImage(f, max); set(url); pv.style.backgroundImage = `url('${url}')`; } catch (e) { toast('Image', e.message, true); }
+  pv.style.opacity = 1;
+}
+async function saveCat(id) {
+  const body = { nom: $('ec-nom').value, couleur: $('ec-col').value, image: EC.image };
+  try { const r = id ? await api('/api/admin/categories/' + id, { method: 'PUT', body }) : await api('/api/admin/categories', { body }); upsert(G.categories, r.categorie); closeModal(); renderMenu(); }
+  catch (e) { $('ec-err').textContent = e.message; }
+}
+async function delCat(id) { if (!confirm('Supprimer cette catégorie ?')) return; try { await api(`/api/admin/categories/${id}/delete`, { body: {} }); G.categories = G.categories.filter(c => c.id !== id); closeModal(); renderMenu(); } catch (e) { $('ec-err').textContent = e.message; } }
+
+let EP = null;
+const rid = () => Math.random().toString(36).slice(2, 9);
+function editPlat(id) {
+  const p = id ? byId(G.plats, id) : null;
+  EP = p ? JSON.parse(JSON.stringify(p)) : { nom: '', description: '', prix: '', categorieId: (G.categories[0] || {}).id, image: '', actif: true, platDuJour: false, options: [], recette: [] };
+  EP._id = id || 0;
+  drawPlatEditor();
+}
+function drawPlatEditor() {
+  const e = EP;
+  const scroll = $('modal') && $('modal').querySelector('.mbox') ? $('modal').querySelector('.mbox').scrollTop : 0;
+  openModal(`<div class="mt h">${e._id ? 'Modifier le plat' : 'Nouveau plat'}</div>
+    <div class="grid2">
+      <div><div class="fld"><label>Nom du plat</label><input value="${esc(e.nom)}" oninput="EP.nom=this.value"></div>
+        <div class="row"><div class="fld"><label>Catégorie</label><select onchange="EP.categorieId=Number(this.value)">${G.categories.map(c => `<option value="${c.id}" ${c.id === e.categorieId ? 'selected' : ''}>${esc(c.nom)}</option>`).join('')}</select></div>
+        <div class="fld"><label>Prix (F CFA)</label><input type="number" value="${esc(e.prix)}" oninput="EP.prix=this.value"></div></div>
+        <div class="fld"><label>Description</label><textarea oninput="EP.description=this.value">${esc(e.description)}</textarea></div>
+        <div class="row" style="gap:20px;margin-bottom:12px"><label style="display:flex;gap:8px;align-items:center;font-weight:700"><button class="sw ${e.actif ? 'on' : ''}" onclick="EP.actif=!EP.actif;this.classList.toggle('on')"></button> Disponible</label>
+        <label style="display:flex;gap:8px;align-items:center;font-weight:700"><button class="sw red ${e.platDuJour ? 'on' : ''}" onclick="EP.platDuJour=!EP.platDuJour;this.classList.toggle('on')"></button> Plat du jour</label></div></div>
+      <div><div class="fld"><label>Photo</label><div class="prev" id="ep-prev" style="width:100%;height:190px;border-radius:18px;background:var(--gris) center/cover no-repeat;${e.image ? `background-image:url('${esc(e.image)}')` : ''};border:1.5px dashed var(--gris2)"></div>
+        <div class="row" style="margin-top:8px"><input type="file" accept="image/*" onchange="pickImg(this,'ep-prev',u=>EP.image=u,1200)">${e.image ? '<button class="btn ghost sm" onclick="EP.image=\'\';drawPlatEditor()">Retirer</button>' : ''}</div>
+        <p class="hint" style="margin-top:6px">Photo prise au téléphone acceptée : elle est réduite automatiquement.</p></div></div>
+    </div>
+    <div class="card-t" style="margin-top:8px"><span>Personnalisation</span><button class="btn ghost sm" onclick="EP.options.push({id:rid(),nom:'',type:'single',requis:true,choix:[{id:rid(),nom:'',prix:0}]});drawPlatEditor()">+ Groupe de choix</button></div>
+    <p class="hint" style="margin:-6px 0 10px">Ex. : « Accompagnement » (un seul choix, obligatoire) ou « Suppléments » (plusieurs choix, payants).</p>
+    ${e.options.map((g, gi) => `<div class="og"><div class="row"><div class="fld" style="margin:0"><input placeholder="Nom du groupe (ex. : Accompagnement)" value="${esc(g.nom)}" oninput="EP.options[${gi}].nom=this.value"></div>
+      <select onchange="EP.options[${gi}].type=this.value" style="padding:10px;border-radius:10px;border:1.5px solid var(--gris2)"><option value="single" ${g.type === 'single' ? 'selected' : ''}>Un seul choix</option><option value="multi" ${g.type === 'multi' ? 'selected' : ''}>Plusieurs choix</option></select>
+      <label style="display:flex;gap:6px;align-items:center;font-weight:600;font-size:13px"><input type="checkbox" ${g.requis ? 'checked' : ''} onchange="EP.options[${gi}].requis=this.checked"> Obligatoire</label>
+      <button class="xbtn" onclick="EP.options.splice(${gi},1);drawPlatEditor()">×</button></div>
+      ${g.choix.map((c, ci) => `<div class="chx"><input placeholder="Choix" value="${esc(c.nom)}" oninput="EP.options[${gi}].choix[${ci}].nom=this.value"><input type="number" placeholder="+ prix" value="${c.prix || ''}" oninput="EP.options[${gi}].choix[${ci}].prix=Number(this.value)||0"><button class="xbtn" onclick="EP.options[${gi}].choix.splice(${ci},1);drawPlatEditor()">×</button></div>`).join('')}
+      <button class="btn line sm" style="margin-top:8px" onclick="EP.options[${gi}].choix.push({id:rid(),nom:'',prix:0});drawPlatEditor()">+ Choix</button></div>`).join('')}
+    <div class="card-t" style="margin-top:14px"><span>Recette (stock)</span><button class="btn ghost sm" onclick="EP.recette.push({stockId:(G.stock[0]||{}).id,qte:1});drawPlatEditor()" ${G.stock.length ? '' : 'disabled'}>+ Ingrédient</button></div>
+    <p class="hint" style="margin:-6px 0 10px">Quand une commande est terminée, ces quantités sont retirées du stock automatiquement (inventaire en temps réel).</p>
+    ${e.recette.map((r, ri) => `<div class="chx"><select onchange="EP.recette[${ri}].stockId=Number(this.value)" style="flex:1;padding:8px;border-radius:10px;border:1.5px solid var(--gris2)">${G.stock.map(s => `<option value="${s.id}" ${s.id === r.stockId ? 'selected' : ''}>${esc(s.nom)} (${esc(s.unite)})</option>`).join('')}</select><input type="number" step="0.01" value="${r.qte}" oninput="EP.recette[${ri}].qte=Number(this.value)||0" style="width:100px"><button class="xbtn" onclick="EP.recette.splice(${ri},1);drawPlatEditor()">×</button></div>`).join('')}
+    <div class="err" id="ep-err"></div>
+    <div class="mfoot">${e._id ? `<button class="btn ghost" onclick="delPlat(${e._id})">Supprimer</button>` : ''}<button class="btn big" onclick="savePlat()">Enregistrer</button></div>`, true);
+  $('modal').querySelector('.mbox').scrollTop = scroll;
+}
+async function savePlat() {
+  const e = EP;
+  const body = { nom: e.nom, description: e.description, prix: Number(e.prix), categorieId: e.categorieId, image: e.image, actif: e.actif, platDuJour: e.platDuJour,
+    options: e.options.map(g => Object.assign({}, g, { choix: g.choix.filter(c => c.nom.trim()) })).filter(g => g.nom.trim() && g.choix.length), recette: e.recette };
+  try { const r = e._id ? await api('/api/admin/plats/' + e._id, { method: 'PUT', body }) : await api('/api/admin/plats', { body }); upsert(G.plats, r.plat); closeModal(); renderMenu(); toast('Plat enregistré', 'Visible tout de suite dans l’app.'); }
+  catch (err) { $('ep-err').textContent = err.message; }
+}
+async function delPlat(id) { if (!confirm('Supprimer définitivement ce plat ? (Pour le cacher temporairement, désactivez-le plutôt.)')) return; try { await api(`/api/admin/plats/${id}/delete`, { body: {} }); G.plats = G.plats.filter(p => p.id !== id); closeModal(); renderMenu(); } catch (e) { $('ep-err').textContent = e.message; } }
+
+// ===================================================================
+// BANNIÈRES
+// ===================================================================
+const banHtml = b => `<div class="ban ${esc(b.couleur)} ${b.image ? 'has-img' : ''}">${b.image ? `<img src="${esc(b.image)}">` : '<div class="d1"></div><div class="d2"></div>'}<div class="bt">${b.titre ? `<div class="h">${esc(b.titre)}</div>` : ''}${b.texte ? `<p>${esc(b.texte)}</p>` : ''}</div></div>`;
+function renderBanners() {
+  const bs = G.banners.slice().sort((a, b) => a.ordre - b.ordre);
+  $('p-bannieres').innerHTML = `<div class="ph-t"><div><div class="h">Bannières défilantes</div><p>Téléversez une image : elle apparaît aussitôt dans le carrousel en haut de l’application client.</p></div><button class="btn" onclick="editBan()">+ Nouvelle bannière</button></div>
+    ${bs.length ? `<div class="bans">${bs.map((b, i) => `<div class="ban-c ${b.actif ? '' : 'off'}">${banHtml(b)}<div class="ban-a">
+      <button class="sw ${b.actif ? 'on' : ''}" onclick="patchBan(${b.id},{actif:${!b.actif}})"></button><span style="font-weight:700;font-size:13px;flex:1">${b.actif ? 'En ligne' : 'Masquée'}</span>
+      <button class="xbtn" onclick="moveBan(${b.id},-1)" ${i ? '' : 'disabled'}>←</button><button class="xbtn" onclick="moveBan(${b.id},1)" ${i < bs.length - 1 ? '' : 'disabled'}>→</button>
+      <button class="btn ghost sm" onclick="editBan(${b.id})">Modifier</button></div></div>`).join('')}</div>` : '<div class="card empty"><div class="shape"></div>Aucune bannière. Ajoutez votre première promo.</div>'}
+    <p class="hint" style="margin-top:14px">Conseil : image horizontale (environ 1200 × 500). Le texte s’affiche sur la gauche de l’image, sur un fond vert pour rester lisible.</p>`;
+}
+let EB = null;
+function editBan(id) {
+  const b = id ? byId(G.banners, id) : null;
+  EB = b ? Object.assign({}, b) : { titre: '', texte: '', image: '', couleur: 'vert', lien: '', actif: true };
+  EB._id = id || 0; drawBan();
+}
+function drawBan() {
+  openModal(`<div class="mt h">${EB._id ? 'Modifier la bannière' : 'Nouvelle bannière'}</div>
+    <div id="eb-prev">${banHtml(EB)}</div>
+    <div class="fld" style="margin-top:14px"><label>Image</label><div class="row"><input type="file" accept="image/*" onchange="pickBanImg(this)">${EB.image ? '<button class="btn ghost sm" onclick="EB.image=\'\';drawBan()">Retirer l’image</button>' : ''}</div></div>
+    <div class="fld"><label>Titre</label><input value="${esc(EB.titre)}" oninput="EB.titre=this.value;$('eb-prev').innerHTML=banHtml(EB)" maxlength="60"></div>
+    <div class="fld"><label>Texte</label><input value="${esc(EB.texte)}" oninput="EB.texte=this.value;$('eb-prev').innerHTML=banHtml(EB)" maxlength="160"></div>
+    <div class="row"><div class="fld"><label>Couleur de fond (sans image)</label><div class="colpick">${[['vert', '#0F5138'], ['rouge', '#E10600'], ['jaune', '#FFB703']].map(([k, c]) => `<button class="${EB.couleur === k ? 'on' : ''}" style="background:${c}" onclick="EB.couleur='${k}';drawBan()"></button>`).join('')}</div></div>
+    <div class="fld"><label>Au toucher, ouvrir</label><select onchange="EB.lien=this.value">${[['', 'Rien'], ['menu', 'La carte'], ['reserver', 'Réservation'], ['devis', 'Demande de devis'], ['chat', 'Discussion']].map(([k, l]) => `<option value="${k}" ${EB.lien === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div></div>
+    <div class="err" id="eb-err"></div>
+    <div class="mfoot">${EB._id ? `<button class="btn ghost" onclick="delBan(${EB._id})">Supprimer</button>` : ''}<button class="btn big" onclick="saveBan()">Publier</button></div>`);
+}
+async function pickBanImg(input) { const f = input.files[0]; if (!f) return; try { $('eb-prev').style.opacity = .4; EB.image = await uploadImage(f, 1400); drawBan(); } catch (e) { toast('Image', e.message, true); $('eb-prev').style.opacity = 1; } }
+async function saveBan() {
+  const body = { titre: EB.titre, texte: EB.texte, image: EB.image, couleur: EB.couleur, lien: EB.lien, actif: EB.actif };
+  try { const r = EB._id ? await api('/api/admin/banners/' + EB._id, { method: 'PUT', body }) : await api('/api/admin/banners', { body }); upsert(G.banners, r.banner); closeModal(); render(); toast('Bannière publiée', 'Elle défile déjà dans l’app.'); }
+  catch (e) { $('eb-err').textContent = e.message; }
+}
+async function patchBan(id, body) { try { const r = await api('/api/admin/banners/' + id, { method: 'PUT', body }); upsert(G.banners, r.banner); render(); } catch (e) { toast('Erreur', e.message, true); } }
+async function moveBan(id, d) {
+  const bs = G.banners.slice().sort((a, b) => a.ordre - b.ordre); const i = bs.findIndex(b => b.id === id), j = i + d; if (j < 0 || j >= bs.length) return;
+  [bs[i], bs[j]] = [bs[j], bs[i]];
+  for (let k = 0; k < bs.length; k++) if (bs[k].ordre !== k + 1) { const r = await api('/api/admin/banners/' + bs[k].id, { method: 'PUT', body: { ordre: k + 1 } }); upsert(G.banners, r.banner); }
+  render();
+}
+async function delBan(id) { if (!confirm('Supprimer cette bannière ?')) return; try { await api(`/api/admin/banners/${id}/delete`, { body: {} }); G.banners = G.banners.filter(b => b.id !== id); closeModal(); render(); } catch (e) { $('eb-err').textContent = e.message; } }
+
+// ===================================================================
+// MESSAGES AUX CLIENTS
+// ===================================================================
+function renderMessages() {
+  const reg = G.clients.filter(c => !c.invite).length, push = G.clients.filter(c => c.push).length;
+  const pdj = G.plats.filter(p => p.platDuJour && p.actif).map(p => p.nom);
+  $('p-messages').innerHTML = `<div class="ph-t"><div><div class="h">Messages clients</div><p>Un message envoyé ici arrive en notification sur le téléphone de tous vos clients.</p></div></div>
+    <div class="kpis"><div class="kpi vert"><div class="l">Clients inscrits</div><div class="v">${reg}</div></div>
+      <div class="kpi"><div class="l">Notifications activées</div><div class="v">${push}</div><div class="s">reçoivent même téléphone verrouillé</div></div>
+      <div class="kpi jaune"><div class="l">Plats du jour</div><div class="v">${pdj.length}</div><div class="s">${esc(pdj.join(', ') || 'aucun')}</div></div>
+      <div class="kpi rouge"><div class="l">Annonces envoyées</div><div class="v">${G.annonces.length}</div></div></div>
+    <div class="grid2" style="align-items:start">
+      <div class="card"><div class="card-t">Envoyer maintenant</div>
+        <div class="fld"><label>Titre</label><input id="an-t" placeholder="Ex. : La cuisine du jour" maxlength="80"></div>
+        <div class="fld"><label>Message</label><textarea id="an-c" placeholder="Ex. : Aujourd’hui : {plats_du_jour}. Commandez avant midi !" maxlength="500"></textarea></div>
+        <div class="ins"><button onclick="ins('an-c','{plats_du_jour}')">+ plats du jour</button><button onclick="ins('an-c','{restaurant}')">+ nom du restaurant</button></div>
+        <button class="btn big" onclick="sendAnnonce()">Envoyer à tous les clients</button>
+        <p class="hint" style="margin-top:10px">« {plats_du_jour} » est remplacé par les plats marqués « Plat du jour » dans Menus & plats.</p></div>
+      <div class="card"><div class="card-t"><span>Messages programmés</span><button class="btn ghost sm" onclick="editProg()">+ Programmer</button></div>
+        ${G.programmes.length ? G.programmes.map(p => `<div class="prog"><div class="hr">${esc(p.heure)}</div><div class="tx"><b>${esc(p.titre)}</b><p>${esc(p.corps)}</p>
+          <div class="days" style="margin-top:8px">${JOURS.map(([d, l]) => `<button class="${p.jours.includes(d) ? 'on' : ''}" style="width:28px;height:28px;font-size:11px;cursor:default">${l}</button>`).join('')}</div>
+          <p style="margin-top:6px;font-size:12px">${p.dernierEnvoi ? 'Dernier envoi : ' + dmy(p.dernierEnvoi) : 'Jamais envoyé'}</p></div>
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end"><button class="sw ${p.actif ? 'on' : ''}" onclick="patchProg(${p.id},{actif:${!p.actif}})"></button>
+          <button class="btn ghost sm" onclick="editProg(${p.id})">Modifier</button><button class="btn line sm" onclick="sendProg(${p.id})">Envoyer maintenant</button></div></div>`).join('') : '<div class="empty">Aucun message programmé.</div>'}
+        <p class="hint" style="margin-top:10px">Exemple : chaque matin à 9 h, vos clients reçoivent la cuisine du jour automatiquement. Le serveur doit rester allumé.</p></div>
+    </div>
+    <div class="card" style="margin-top:16px"><div class="card-t">Derniers envois</div>${G.annonces.length ? `<table class="tbl"><tbody>${G.annonces.slice(0, 15).map(a => `<tr><td style="width:150px">${fdt(a.at)}</td><td><b>${esc(a.titre)}</b> — ${esc(a.corps)}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">Aucun envoi pour le moment.</div>'}</div>`;
+}
+function ins(id, t) { const el = $(id); const s = el.selectionStart || el.value.length; el.value = el.value.slice(0, s) + t + el.value.slice(s); el.focus(); }
+async function sendAnnonce() {
+  const t = $('an-t').value.trim(), c = $('an-c').value.trim();
+  if (!t || !c) return toast('Message incomplet', 'Titre et message requis.', true);
+  if (!confirm('Envoyer ce message à tous vos clients ?')) return;
+  try { const r = await api('/api/admin/annonces', { body: { titre: t, corps: c } }); G.annonces.unshift(r.annonce); render(); toast('Message envoyé', `${r.pushes} notification(s) push · ${r.enLigne} client(s) connecté(s) en ce moment`); }
+  catch (e) { toast('Erreur', e.message, true); }
+}
+let EPR = null;
+function editProg(id) {
+  const p = id ? byId(G.programmes, id) : null;
+  EPR = p ? JSON.parse(JSON.stringify(p)) : { titre: 'La cuisine du jour', corps: 'Bonjour ! Aujourd’hui chez {restaurant} : {plats_du_jour}. Commandez dès maintenant.', heure: '09:00', jours: [1, 2, 3, 4, 5, 6, 0], actif: true };
+  EPR._id = id || 0;
+  openModal(`<div class="mt h">${id ? 'Modifier' : 'Programmer'} un message</div>
+    <div class="row"><div class="fld" style="max-width:140px"><label>Heure</label><input type="time" id="pr-h" value="${esc(EPR.heure)}"></div>
+    <div class="fld"><label>Jours</label><div class="days" id="pr-j">${JOURS.map(([d, l]) => `<button class="${EPR.jours.includes(d) ? 'on' : ''}" onclick="this.classList.toggle('on');EPR.jours=EPR.jours.includes(${d})?EPR.jours.filter(x=>x!==${d}):EPR.jours.concat(${d})">${l}</button>`).join('')}</div></div></div>
+    <div class="fld"><label>Titre</label><input id="pr-t" value="${esc(EPR.titre)}"></div>
+    <div class="fld"><label>Message</label><textarea id="pr-c">${esc(EPR.corps)}</textarea></div>
+    <div class="ins"><button onclick="ins('pr-c','{plats_du_jour}')">+ plats du jour</button><button onclick="ins('pr-c','{restaurant}')">+ nom du restaurant</button></div>
+    <div class="err" id="pr-err"></div>
+    <div class="mfoot">${id ? `<button class="btn ghost" onclick="delProg(${id})">Supprimer</button>` : ''}<button class="btn" onclick="saveProg()">Enregistrer</button></div>`);
+}
+async function saveProg() {
+  const body = { heure: $('pr-h').value, titre: $('pr-t').value, corps: $('pr-c').value, jours: EPR.jours, actif: EPR.actif };
+  try { const r = EPR._id ? await api('/api/admin/programmes/' + EPR._id, { method: 'PUT', body }) : await api('/api/admin/programmes', { body }); upsert(G.programmes, r.programme); closeModal(); render(); toast('Message programmé', `Envoi automatique à ${r.programme.heure}`); }
+  catch (e) { $('pr-err').textContent = e.message; }
+}
+async function patchProg(id, body) { try { const r = await api('/api/admin/programmes/' + id, { method: 'PUT', body }); upsert(G.programmes, r.programme); render(); } catch (e) { toast('Erreur', e.message, true); } }
+async function sendProg(id) { if (!confirm('Envoyer ce message maintenant à tous les clients ?')) return; try { const r = await api(`/api/admin/programmes/${id}/envoyer`, { body: {} }); await load(); render(); toast('Message envoyé', r.pushes + ' notification(s) push'); } catch (e) { toast('Erreur', e.message, true); } }
+async function delProg(id) { if (!confirm('Supprimer ce message programmé ?')) return; await api(`/api/admin/programmes/${id}/delete`, { body: {} }); G.programmes = G.programmes.filter(p => p.id !== id); closeModal(); render(); }
+
+// ===================================================================
+// RÉSERVATIONS
+// ===================================================================
+let resaF = 'traiter';
+function renderResas() {
+  const td = todayStr();
+  const f = { traiter: r => r.statut === 'demandee', venir: r => r.statut === 'confirmee' && r.date >= td, jour: r => r.date === td && ['confirmee', 'honoree'].includes(r.statut), toutes: () => true }[resaF];
+  const list = G.reservations.filter(f).sort((a, b) => (a.date + a.heure).localeCompare(b.date + b.heure));
+  const cnt = k => G.reservations.filter({ traiter: r => r.statut === 'demandee', venir: r => r.statut === 'confirmee' && r.date >= td, jour: r => r.date === td && ['confirmee', 'honoree'].includes(r.statut), toutes: () => true }[k]).length;
+  const B = { demandee: '<span class="badge jaune">À traiter</span>', confirmee: '<span class="badge vert">Confirmée</span>', refusee: '<span class="badge rouge">Refusée</span>', annulee: '<span class="badge">Annulée</span>', honoree: '<span class="badge noir">Honorée</span>' };
+  $('p-reservations').innerHTML = `<div class="ph-t"><div><div class="h">Réservations</div><p>Le client reçoit une notification dès que vous confirmez ou refusez.</p></div></div>
+    <div class="resa-tabs">${[['traiter', 'À traiter'], ['jour', 'Aujourd’hui'], ['venir', 'À venir'], ['toutes', 'Toutes']].map(([k, l]) => `<button class="nb ${resaF === k ? 'on' : ''}" onclick="resaF='${k}';render()">${l} (${cnt(k)})</button>`).join('')}</div>
+    <div class="card">${list.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Date</th><th>Heure</th><th>Client</th><th>Pers.</th><th>Espace</th><th>Occasion / demande</th><th>Statut</th><th></th></tr></thead><tbody>
+      ${list.map(r => `<tr><td><b>${dmy(r.date)}</b></td><td><b>${esc(r.heure)}</b></td><td>${esc(r.nom)}<br><a href="tel:${esc(r.tel)}" style="font-size:13px">${esc(r.tel)}</a></td><td class="num"><b>${r.personnes}</b></td><td>${esc(r.espace)}</td>
+        <td style="max-width:260px">${esc(r.occasion)}${r.note ? `<div class="hint">${esc(r.note)}</div>` : ''}${r.reponse ? `<div class="hint"><b>Votre réponse :</b> ${esc(r.reponse)}</div>` : ''}</td><td>${B[r.statut] || ''}</td>
+        <td style="white-space:nowrap">${r.statut === 'demandee' ? `<button class="btn vert sm" onclick="resa(${r.id},'confirmee')">Confirmer</button> <button class="btn ghost sm" onclick="resa(${r.id},'refusee')">Refuser</button>` : r.statut === 'confirmee' ? `<button class="btn ghost sm" onclick="resa(${r.id},'honoree')">Client venu</button> <button class="btn line sm" onclick="resa(${r.id},'annulee')">Annuler</button>` : ''}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty"><div class="shape"></div>Aucune réservation ici.</div>'}</div>`;
+}
+async function resa(id, st) {
+  let rep = '';
+  if (st === 'confirmee') rep = prompt('Message au client (facultatif) :', 'Avec plaisir, votre table vous attend !') || '';
+  if (st === 'refusee' || st === 'annulee') { rep = prompt('Raison (envoyée au client) :', 'Désolé, nous sommes complets à cette heure-là.'); if (rep === null) return; }
+  try { const r = await api('/api/admin/reservations/' + id, { body: { statut: st, reponse: rep } }); upsert(G.reservations, r.reservation); render(); } catch (e) { toast('Erreur', e.message, true); }
+}
+
+// ===================================================================
+// DEVIS ÉVÉNEMENTS
+// ===================================================================
+function renderDevis() {
+  const ord = { nouveau: 0, accepte: 1, propose: 2, refuse: 3, termine: 4 };
+  const list = G.devis.slice().sort((a, b) => (ord[a.statut] - ord[b.statut]) || b.id - a.id);
+  const B = { nouveau: '<span class="badge rouge">Nouveau</span>', propose: '<span class="badge jaune">Proposition envoyée</span>', accepte: '<span class="badge vert">Accepté par le client</span>', refuse: '<span class="badge">Refusé</span>', termine: '<span class="badge noir">Terminé</span>' };
+  $('p-devis').innerHTML = `<div class="ph-t"><div><div class="h">Devis événements</div><p>Mariages, anniversaires, séminaires… Envoyez un prix : le client l’accepte depuis son téléphone.</p></div></div>
+    ${list.length ? `<div class="devis">${list.map(d => `<div class="card dv"><div class="card-t"><span>${esc(d.evenement)}</span>${B[d.statut] || ''}</div>
+      <div class="k"><span>Client</span><b>${esc(d.nom)} · <a href="tel:${esc(d.tel)}">${esc(d.tel)}</a></b></div>
+      <div class="k"><span>Date</span><b>${dmy(d.date)}</b></div><div class="k"><span>Invités</span><b>${d.invites}</b></div>
+      <div class="k"><span>Formule</span><b>${esc(d.formule)}</b></div>${d.lieu ? `<div class="k"><span>Lieu</span><b>${esc(d.lieu)}</b></div>` : ''}
+      ${d.budget ? `<div class="k"><span>Budget annoncé</span><b>${F(d.budget)}</b></div>` : ''}
+      ${d.description ? `<div class="desc">${esc(d.description)}</div>` : ''}
+      ${d.montant ? `<div class="k"><span>Votre proposition</span><b style="font-size:17px">${F(d.montant)}</b></div>` : ''}${d.reponse ? `<p class="hint" style="margin-top:6px">${esc(d.reponse)}</p>` : ''}
+      <div class="row" style="margin-top:12px">${d.statut === 'nouveau' || d.statut === 'propose' ? `<button class="btn" onclick="proposer(${d.id})">${d.statut === 'nouveau' ? 'Faire une proposition' : 'Modifier la proposition'}</button><button class="btn ghost" onclick="devisSt(${d.id},'refuse')">Décliner</button>` : ''}
+      ${d.statut === 'accepte' ? `<button class="btn vert" onclick="devisSt(${d.id},'termine')">Marquer terminé</button><span class="hint">Pensez à saisir l’acompte en caisse.</span>` : ''}
+      <button class="btn line" onclick="showPanel('discussions');openConv(${d.clientId})">Écrire</button></div></div>`).join('')}</div>` : '<div class="card empty"><div class="shape"></div>Aucune demande de devis pour l’instant.</div>'}`;
+}
+function proposer(id) {
+  const d = byId(G.devis, id);
+  openModal(`<div class="mt h">Proposition — ${esc(d.evenement)}</div><p class="hint">${d.invites} invités · ${dmy(d.date)} · ${esc(d.formule)}</p>
+    <div class="fld" style="margin-top:12px"><label>Montant total (F CFA)</label><input type="number" id="dv-m" value="${d.montant || ''}"></div>
+    <div class="fld"><label>Détail de la proposition</label><textarea id="dv-r" rows="6" placeholder="Menu proposé, boissons, service, acompte de 50 % à la réservation…">${esc(d.reponse || '')}</textarea></div>
+    <div class="err" id="dv-e"></div><div class="mfoot"><button class="btn big" onclick="devisSt(${id},'propose')">Envoyer au client</button></div>`);
+}
+async function devisSt(id, st) {
+  const body = { statut: st };
+  if (st === 'propose') { body.montant = Number($('dv-m').value); body.reponse = $('dv-r').value; if (!body.montant) return $('dv-e').textContent = 'Indiquez un montant.'; }
+  if (st === 'refuse') { const r = prompt('Message au client :', 'Merci pour votre demande. Nous ne sommes malheureusement pas disponibles à cette date.'); if (r === null) return; body.reponse = r; }
+  try { const r = await api('/api/admin/devis/' + id, { body }); upsert(G.devis, r.devis); closeModal(); render(); if (st === 'propose') toast('Proposition envoyée', 'Le client est notifié.'); } catch (e) { toast('Erreur', e.message, true); }
+}
+
+// ===================================================================
+// DISCUSSIONS
+// ===================================================================
+let CUR_CHAT = null;
+function renderDiscussions(keep) {
+  const convs = {};
+  G.chats.forEach(m => { (convs[m.clientId] = convs[m.clientId] || []).push(m); });
+  const ids = Object.keys(convs).map(Number).sort((a, b) => { const la = convs[a][convs[a].length - 1], lb = convs[b][convs[b].length - 1]; return lb.at.localeCompare(la.at); });
+  if (CUR_CHAT && !convs[CUR_CHAT]) convs[CUR_CHAT] = [];
+  if (!CUR_CHAT && ids.length) CUR_CHAT = ids[0];
+  const cl = id => byId(G.clients, id) || { nom: 'Client', tel: '' };
+  const thread = CUR_CHAT ? (convs[CUR_CHAT] || []) : [];
+  const input = $('th-in'); const draft = input ? input.value : ''; const hadFocus = input && document.activeElement === input;
+  $('p-discussions').innerHTML = `<div class="ph-t"><div><div class="h">Discussions</div><p>Répondez aux questions des clients. Ils reçoivent votre réponse en notification.</p></div></div>
+    <div class="chatw"><div class="convs">${ids.length || CUR_CHAT ? (ids.includes(CUR_CHAT) || !CUR_CHAT ? ids : [CUR_CHAT].concat(ids)).map(id => { const ms = convs[id] || []; const last = ms[ms.length - 1]; const un = ms.filter(m => m.de === 'client' && !m.lu).length; const c = cl(id); return `<div class="conv ${id === CUR_CHAT ? 'on' : ''}" onclick="openConv(${id})"><div class="av">${esc((c.nom || '?')[0].toUpperCase())}</div><div class="ci"><b>${esc(c.nom)}</b><small>${last ? esc((last.de === 'resto' ? 'Vous : ' : '') + last.texte) : 'Nouvelle discussion'}</small></div>${un ? `<span class="cnt">${un}</span>` : ''}</div>`; }).join('') : '<div class="empty">Aucune discussion.</div>'}</div>
+    <div class="thread">${CUR_CHAT ? `<div class="thread-h"><span>${esc(cl(CUR_CHAT).nom)} ${cl(CUR_CHAT).tel ? `· <a href="tel:${esc(cl(CUR_CHAT).tel)}">${esc(cl(CUR_CHAT).tel)}</a>` : ''}</span><span class="badge">${G.commandes.filter(c => c.clientId === CUR_CHAT).length} commande(s)</span></div>
+      <div class="msgs" id="msgs">${thread.map(m => `<div class="msg ${m.de === 'client' ? 'cl' : 're'}">${esc(m.texte)}<time>${fdt(m.at)}</time></div>`).join('') || '<div class="empty">Écrivez le premier message.</div>'}</div>
+      <div class="thread-f"><input id="th-in" placeholder="Votre réponse…" onkeydown="if(event.key==='Enter')sendChat()"><button class="btn" onclick="sendChat()">Envoyer</button></div>` : '<div class="empty" style="margin:auto">Sélectionnez une discussion.</div>'}</div></div>`;
+  const ms = $('msgs'); if (ms) ms.scrollTop = ms.scrollHeight;
+  const ni = $('th-in'); if (ni) { ni.value = draft; if (hadFocus || !keep) ni.focus(); }
+  if (CUR_CHAT && thread.some(m => m.de === 'client' && !m.lu)) { thread.forEach(m => m.lu = true); api(`/api/admin/chat/${CUR_CHAT}/lu`, { body: {} }).catch(() => { }); badges(); }
+}
+function openConv(id) { CUR_CHAT = id; const i = $('th-in'); if (i) i.value = ''; renderDiscussions(); }
+async function sendChat() {
+  const i = $('th-in'); const t = i.value.trim(); if (!t) return;
+  try { const r = await api('/api/admin/chat/' + CUR_CHAT, { body: { texte: t } }); i.value = ''; upsert(G.chats, r.message); renderDiscussions(); } catch (e) { toast('Erreur', e.message, true); }
+}
+
+// ===================================================================
+// CLIENTS
+// ===================================================================
+let cliQ = '';
+function renderClients() {
+  const stats = {};
+  G.commandes.forEach(c => { const s = stats[c.clientId] = stats[c.clientId] || { n: 0, t: 0, last: '' }; if (c.statut === 'terminee') { s.n++; s.t += c.total; } if (c.at > s.last) s.last = c.at; });
+  const q = cliQ.toLowerCase();
+  const list = G.clients.filter(c => !c.invite && (!q || (c.nom + ' ' + c.tel).toLowerCase().includes(q))).sort((a, b) => ((stats[b.id] || {}).t || 0) - ((stats[a.id] || {}).t || 0));
+  $('p-clients').innerHTML = `<div class="ph-t"><div><div class="h">Clients</div><p>${list.length} client(s) inscrit(s) · classés par montant dépensé</p></div><input placeholder="Rechercher nom ou téléphone" value="${esc(cliQ)}" oninput="cliQ=this.value;renderClients();setTimeout(()=>{const i=document.querySelector('#p-clients input');i.focus();i.setSelectionRange(i.value.length,i.value.length)})" style="padding:10px 14px;border-radius:999px;border:1.5px solid var(--gris2);min-width:260px;outline:none"></div>
+    <div class="card">${list.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Client</th><th>Téléphone</th><th>Inscrit le</th><th class="num">Commandes</th><th class="num">Total dépensé</th><th class="num">Points</th><th>Notifications</th><th>Dernière visite</th><th></th></tr></thead><tbody>
+    ${list.map(c => { const s = stats[c.id] || {}; return `<tr><td><b>${esc(c.nom)}</b></td><td><a href="tel:${esc(c.tel)}">${esc(c.tel)}</a></td><td>${c.createdAt ? fdate(c.createdAt) : ''}</td><td class="num">${s.n || 0}</td><td class="num"><b>${F(s.t)}</b></td><td class="num">${c.points}</td><td>${c.push ? '<span class="badge vert">Activées</span>' : '<span class="badge">Non</span>'}</td><td>${s.last ? fdt(s.last) : '—'}</td><td><button class="btn ghost sm" onclick="showPanel('discussions');openConv(${c.id})">Écrire</button></td></tr>`; }).join('')}</tbody></table></div>` : '<div class="empty"><div class="shape"></div>Aucun client pour le moment.</div>'}</div>`;
+}
+
+// ===================================================================
+// TABLES & QR
+// ===================================================================
+function baseUrl() { try { return localStorage.getItem('g_base') || location.origin; } catch (e) { return location.origin; } }
+function renderTables() {
+  const n = G.settings.nbTables, base = baseUrl(), r = G.settings.resto;
+  const local = /localhost|127\.0\.0\.1/.test(base);
+  const qr = (url) => { const q = qrcode(0, 'M'); q.addData(url); q.make(); return q.createSvgTag({ cellSize: 4, margin: 0, scalable: true }); };
+  $('p-tables').innerHTML = `<div class="ph-t qr-tools"><div><div class="h">Tables & QR codes</div><p>Imprimez et posez un QR code sur chaque table : le client scanne, commande, et reçoit une notification quand son plat est prêt.</p></div>
+      <button class="btn big" onclick="document.body.classList.add('print-qr');window.print();setTimeout(()=>document.body.classList.remove('print-qr'),500)">Imprimer les QR codes</button></div>
+    <div class="card qr-tools" style="margin-bottom:16px"><div class="row"><div class="fld" style="max-width:180px"><label>Nombre de tables</label><input type="number" id="t-n" value="${n}" min="0" max="300"></div>
+      <div class="fld"><label>Adresse de l’application (celle que les clients ouvrent)</label><input id="t-base" value="${esc(base)}"></div>
+      <div class="fld" style="flex:0"><button class="btn vert" onclick="saveTables()">Mettre à jour</button></div></div>
+      ${local ? `<p class="hint" style="color:var(--rouge2);font-weight:600">Attention : « localhost » ne fonctionne que sur cet ordinateur. Mettez l’adresse Wi-Fi affichée au démarrage du serveur (ex. : http://192.168.1.20:3000) ou votre adresse en ligne.</p>` : ''}</div>
+    <div class="qrs"><div class="qr" style="border-color:var(--rouge)"><div class="h">Menu</div>${qr(base + '/')}<p>Scannez pour commander</p><small>${esc(r.nom)} · livraison & à emporter</small></div>
+      ${Array.from({ length: n }, (_, i) => `<div class="qr"><div class="h">Table ${i + 1}</div>${qr(base + '/?table=' + (i + 1))}<p>Scannez pour commander</p><small>${esc(r.nom)}</small></div>`).join('')}</div>`;
+}
+async function saveTables() {
+  const b = $('t-base').value.trim().replace(/\/+$/, '');
+  try { localStorage.setItem('g_base', b); } catch (e) { }
+  try { const r = await api('/api/admin/resto', { method: 'PUT', body: { nbTables: Number($('t-n').value) } }); G.settings.nbTables = r.nbTables; render(); } catch (e) { toast('Erreur', e.message, true); }
+}
+
+// ===================================================================
+// RÉGLAGES
+// ===================================================================
+function renderReglages() {
+  const r = G.settings.resto;
+  const f = (k, l, t, extra) => `<div class="fld"><label>${l}</label><input id="rg-${k}" type="${t || 'text'}" value="${esc(r[k])}" ${extra || ''}></div>`;
+  $('p-reglages').innerHTML = `<div class="ph-t"><div><div class="h">Réglages</div></div></div>
+    <div class="grid2" style="align-items:start">
+      <div class="card"><div class="card-t">Le restaurant</div>
+        ${f('nom', 'Nom affiché')}${f('slogan', 'Slogan')}${f('adresse', 'Adresse')}
+        <div class="row">${f('tel', 'Téléphone')}${f('whatsapp', 'WhatsApp')}</div>
+        ${f('horaires', 'Horaires (texte affiché)')}${f('email', 'E-mail de contact')}
+        <div class="row">${f('lat', 'Latitude', 'number', 'step="any"')}${f('lng', 'Longitude', 'number', 'step="any"')}<div class="fld" style="flex:0"><button class="btn ghost" onclick="hereGPS()">Ma position</button></div></div>
+        <p class="hint">La position sert de point de départ sur la carte de suivi des livraisons.</p></div>
+      <div><div class="card"><div class="card-t">Livraison & commandes</div>
+        <div class="row">${f('fraisLivraison', 'Frais de livraison (F)', 'number')}${f('minCommande', 'Commande minimum (F)', 'number')}</div>
+        ${f('delai', 'Délai de livraison affiché')}${f('fuseau', 'Fuseau horaire')}</div>
+      <div class="card" style="margin-top:16px"><div class="card-t">Fidélité</div>
+        <div class="row">${f('pointsParMille', 'Points par 1 000 F', 'number')}${f('valeurPoint', 'Valeur d’un point (F)', 'number')}${f('seuilPoints', 'Points minimum', 'number')}</div>
+        <p class="hint">Les points sont gagnés quand la commande est terminée et peuvent payer jusqu’à 50 % d’un panier.</p></div>
+      <div class="mfoot"><span class="err" id="rg-err"></span><button class="btn big" onclick="saveResto()">Enregistrer les réglages</button></div>
+      <div class="card" style="margin-top:16px"><div class="card-t">Sécurité</div>
+        <div class="fld"><label>Mot de passe actuel</label><input id="sc-cur" type="password"></div>
+        <div class="row"><div class="fld"><label>Nouvel identifiant</label><input id="sc-u" placeholder="${esc(G.settings.adminUser)}"></div><div class="fld"><label>Nouveau mot de passe</label><input id="sc-p" type="password"></div></div>
+        <div class="fld"><label>Nouveau code de suppression</label><input id="sc-d" type="password"></div>
+        <div class="err" id="sc-err"></div><button class="btn vert" onclick="saveSecu()">Mettre à jour</button></div></div></div>`;
+}
+function hereGPS() { navigator.geolocation && navigator.geolocation.getCurrentPosition(p => { $('rg-lat').value = p.coords.latitude.toFixed(6); $('rg-lng').value = p.coords.longitude.toFixed(6); }, () => toast('Position refusée', '', true)); }
+async function saveResto() {
+  const body = {}; ['nom', 'slogan', 'adresse', 'tel', 'whatsapp', 'horaires', 'email', 'lat', 'lng', 'fraisLivraison', 'minCommande', 'delai', 'fuseau', 'pointsParMille', 'valeurPoint', 'seuilPoints'].forEach(k => body[k] = $('rg-' + k).value);
+  try { const r = await api('/api/admin/resto', { method: 'PUT', body }); G.settings.resto = r.resto; $('g-nom').textContent = r.resto.nom; toast('Réglages enregistrés', 'L’app client est à jour.'); } catch (e) { $('rg-err').textContent = e.message; }
+}
+async function saveSecu() {
+  try { const r = await api('/api/admin/securite', { body: { currentPassword: $('sc-cur').value, newUsername: $('sc-u').value, newPassword: $('sc-p').value, newDeleteCode: $('sc-d').value } }); G.settings.adminUser = r.username; render(); toast('Accès mis à jour', ''); }
+  catch (e) { $('sc-err').textContent = e.message; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0B3D2C">
+<link rel="icon" href="/icon.svg">
+<title>Livraison</title>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<style>
+:root{--vert:#0B3D2C;--vert3:#16684A;--rouge:#E10600;--jaune:#FFB703;--creme:#FFFDF8;--gris:#F3F1EE;--gris4:#6E6961;--noir:#16130F;--fh:'Barlow Condensed','Arial Narrow',sans-serif;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Barlow',-apple-system,sans-serif;background:var(--vert);color:var(--noir);min-height:100vh;}
+.h{font-family:var(--fh);font-weight:800;text-transform:uppercase;line-height:1;}
+.top{color:#fff;padding:22px 18px;}
+.top .h{font-size:40px;}
+.top p{opacity:.8;margin-top:4px;}
+.sheet{background:var(--creme);border-radius:28px 28px 0 0;min-height:80vh;padding:20px 18px 40px;}
+.box{background:#fff;border-radius:20px;padding:16px;margin-bottom:14px;box-shadow:0 1px 0 #E6E2DC;}
+.k{color:var(--gris4);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;}
+.v{font-size:18px;font-weight:700;margin:2px 0 10px;}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;padding:17px;border-radius:999px;border:none;font-family:var(--fh);font-weight:800;font-size:22px;text-transform:uppercase;color:#fff;background:var(--rouge);text-decoration:none;margin-bottom:10px;cursor:pointer;}
+.btn.vert{background:var(--vert3);}
+.btn.ghost{background:var(--gris);color:var(--noir);}
+.row{display:flex;gap:10px;}
+.row .btn{flex:1;font-size:18px;}
+.st{display:flex;align-items:center;gap:10px;font-weight:700;margin-bottom:12px;}
+.st i{width:14px;height:14px;border-radius:50%;background:#bbb;}
+.st.on i{background:#3BD07F;box-shadow:0 0 0 6px rgba(59,208,127,.25);animation:p 1.5s infinite;}
+@keyframes p{50%{box-shadow:0 0 0 10px rgba(59,208,127,.05);}}
+.tot{display:flex;justify-content:space-between;align-items:center;}
+.tot .h{font-size:34px;}
+li{list-style:none;padding:4px 0;}
+.err{color:#B80500;font-weight:600;}
+</style>
+</head>
+<body>
+<div class="top"><div class="h" id="t">Livraison</div><p id="sub">Chargement…</p></div>
+<div class="sheet" id="main"></div>
+<script>
+const q = new URLSearchParams(location.search), C = q.get('c'), K = q.get('k');
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const F = n => Math.round(n || 0).toLocaleString('fr-FR').replace(/ | /g, ' ') + ' F';
+const PAY = { especes: 'Espèces', wave: 'Wave', orange_money: 'Orange Money', mtn_momo: 'MTN MoMo', moov_money: 'Moov Money' };
+let watch = null, lastSent = 0, wake = null, O = null;
+async function post(path, body) { const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ c: C, k: K }, body)) }); const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || 'Erreur'); return j; }
+async function load() {
+  try {
+    const r = await fetch(`/api/livreur/commande?c=${encodeURIComponent(C)}&k=${encodeURIComponent(K)}`).then(x => x.json());
+    if (!r.ok) throw new Error(r.error);
+    O = r.commande; draw(r.resto);
+  } catch (e) { $('sub').textContent = ''; $('main').innerHTML = `<p class="err">${esc(e.message || 'Lien invalide')}</p>`; }
+}
+function draw(resto) {
+  const c = O;
+  $('t').textContent = 'Course n° ' + c.numero; $('sub').textContent = resto.nom;
+  const dest = c.position ? `${c.position.lat},${c.position.lng}` : encodeURIComponent(c.adresse || '');
+  if (c.statut !== 'en_livraison') { $('main').innerHTML = `<div class="box"><div class="h" style="font-size:30px">${c.statut === 'terminee' ? 'Course terminée' : 'Course non active'}</div><p style="margin-top:8px;color:var(--gris4)">Merci !</p></div>`; return; }
+  $('main').innerHTML = `
+    <div class="box"><div class="k">Client</div><div class="v">${esc(c.clientNom)}</div>
+      <div class="k">Adresse</div><div class="v">${esc(c.adresse || 'Position GPS partagée')}</div>
+      <div class="row"><a class="btn ghost" href="tel:${esc(c.tel)}">Appeler</a><a class="btn ghost" target="_blank" href="https://www.google.com/maps/dir/?api=1&destination=${dest}">Itinéraire</a></div>
+      ${c.note ? `<div class="k">Note</div><div class="v" style="font-weight:500">${esc(c.note)}</div>` : ''}</div>
+    <div class="box"><ul>${c.lignes.map(l => `<li><b>${l.qte} ×</b> ${esc(l.nom)}</li>`).join('')}</ul>
+      <div class="tot" style="margin-top:10px"><div><div class="k">À encaisser</div><div style="font-weight:700">${PAY[c.paiement] || c.paiement}</div></div><div class="h">${F(c.total)}</div></div></div>
+    <div class="box"><div class="st ${watch !== null ? 'on' : ''}" id="st"><i></i><span id="st-t">${watch !== null ? 'Position partagée avec le client' : 'Position non partagée'}</span></div>
+      ${watch === null ? `<button class="btn vert" onclick="start()">Démarrer la course</button>` : `<button class="btn ghost" onclick="stop()">Mettre en pause</button>`}
+      <p id="gerr" class="err"></p></div>
+    <button class="btn" onclick="livree()">Commande livrée et payée</button>`;
+}
+async function start() {
+  if (!navigator.geolocation) return $('gerr').textContent = 'GPS indisponible sur ce téléphone.';
+  watch = navigator.geolocation.watchPosition(async p => {
+    const now = Date.now(); if (now - lastSent < 7000) return; lastSent = now;
+    try { await post('/api/livreur/position', { lat: p.coords.latitude, lng: p.coords.longitude }); $('st-t').textContent = 'Position partagée · ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }); }
+    catch (e) { $('gerr').textContent = e.message; }
+  }, e => { $('gerr').textContent = 'Autorisez la localisation pour que le client vous suive.'; }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 });
+  try { if ('wakeLock' in navigator) wake = await navigator.wakeLock.request('screen'); } catch (e) { }
+  draw({ nom: $('sub').textContent });
+}
+function stop() { if (watch !== null) navigator.geolocation.clearWatch(watch); watch = null; if (wake) wake.release(); draw({ nom: $('sub').textContent }); }
+async function livree() {
+  if (!confirm('Confirmer que la commande est livrée et payée ?')) return;
+  try { await post('/api/livreur/livree', {}); stop(); O.statut = 'terminee'; draw({ nom: $('sub').textContent }); } catch (e) { alert(e.message); }
+}
+load();
+</script>
+</body>
+</html>
