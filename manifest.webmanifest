@@ -1,0 +1,11 @@
+{
+  "name": "Restaurant — Commande en ligne",
+  "short_name": "Restaurant",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0B3D2C",
+  "theme_color": "#0B3D2C",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

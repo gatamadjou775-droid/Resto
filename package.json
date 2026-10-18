@@ -1,0 +1,14 @@
+{
+  "name": "resto-plateforme",
+  "version": "1.0.0",
+  "description": "Plateforme restaurant : application client (commande, suivi, QR de table, réservation, devis), gestion des commandes en temps réel et caisse — un seul serveur, une seule base de données.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}
